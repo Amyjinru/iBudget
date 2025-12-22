@@ -1,0 +1,27 @@
+:root{--bg:#f6f7f9;--surface:#ffffff;--text:#0f172a;--muted:#6b7280;--border:#e5e7eb;--accent:#2563eb}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{font-family:"Inter",system-ui,Arial,Helvetica,sans-serif;margin:0;padding:0;background:var(--bg);color:var(--text)}
+nav{position:sticky;top:0;background:rgba(255,255,255,.8);backdrop-filter:saturate(180%) blur(10px);color:var(--text);padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.4px}
+.brand .icon{width:20px;height:20px}
+nav a{color:var(--text);text-decoration:none;padding:8px 10px;border-radius:8px}
+nav a:hover{background:#f1f5f9}
+.container{max-width:980px;margin:0 auto;padding:24px}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 30px rgba(16,24,40,.06);overflow:hidden}
+.card h1,.card h2{margin:0;padding:18px 22px;border-bottom:1px solid var(--border)}
+.card .content{padding:18px 22px}
+table{border-collapse:collapse;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+thead th{background:#f9fafb;color:#475569;font-weight:500}
+th,td{border-bottom:1px solid var(--border);padding:10px 12px;text-align:left}
+tbody tr:hover{background:rgba(31,41,55,.4)}
+form .row{display:flex;gap:12px;flex-wrap:wrap}
+input,select{background:#fff;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;outline:none}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.actions{display:flex;gap:12px;margin-top:12px}
+button{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text);font-weight:600;cursor:pointer}
+button:hover{border-color:var(--accent);color:var(--accent)}
+.icon{width:18px;height:18px;display:inline-block;vertical-align:-3px}
+.muted{color:var(--muted)}
