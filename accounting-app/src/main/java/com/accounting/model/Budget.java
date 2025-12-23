@@ -3,6 +3,8 @@ package com.accounting.model;
 import com.google.gson.annotations.SerializedName;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
@@ -50,11 +52,12 @@ public class Budget {
 
     @SerializedName("periodUnit")
     @Column(name = "period_unit")
+    @Enumerated(EnumType.STRING)
     private PeriodUnit periodUnit;
 
     @SerializedName("periodCount")
     @Column(name = "period_count")
-    private int periodCount = 1;
+    private Integer periodCount;
     
     public Budget() {
         this.id = UUID.randomUUID().toString();
@@ -165,11 +168,11 @@ public class Budget {
         this.periodUnit = periodUnit;
     }
 
-    public int getPeriodCount() {
+    public Integer getPeriodCount() {
         return periodCount;
     }
 
-    public void setPeriodCount(int periodCount) {
+    public void setPeriodCount(Integer periodCount) {
         this.periodCount = periodCount;
     }
 
@@ -181,7 +184,7 @@ public class Budget {
      * 预算结束日期（包含）
      */
     public LocalDate getEndDate() {
-        if (startDate == null || periodUnit == null || periodCount <= 0) return null;
+        if (startDate == null || periodUnit == null || periodCount == null || periodCount <= 0) return null;
         switch (periodUnit) {
             case DAYS:
                 return startDate.plusDays(periodCount - 1);

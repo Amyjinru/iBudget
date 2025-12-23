@@ -59,6 +59,11 @@
         .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;font-weight: 600}
         [data-theme="dark"] .btn:not(.btn-primary) { background: #1e293b; }
         .btn-primary{background:var(--accent);border-color:var(--accent);color:#0f172a}
+        .toggle-group{display:flex;gap:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);width:100%;height:44px}
+        .toggle-btn{flex:1;padding:0;background:var(--bg);color:var(--muted);border:none;cursor:pointer;font-weight:600;font-size:14px;transition:all 0.2s ease;border-right:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+        .toggle-btn:last-child{border-right:none}
+        .toggle-btn.active{background:var(--accent);color:#fff;box-shadow:inset 0 0 0 2px var(--accent)}
+        .toggle-btn:hover:not(.active){background:var(--card);color:var(--text)}
 
         .hint { font-size: 10px; color: var(--muted); margin-top: 4px; }
     </style>
@@ -94,7 +99,13 @@
     <div class="surface" style="margin-bottom:16px">
         <div class="section-title">📝 新增/编辑账目</div>
         <div class="grid-3">
-            <div><label>类型</label><select id="txType"><option value="EXPENSE">支出</option><option value="INCOME">收入</option></select></div>
+            <div>
+                <label>类型</label>
+                <div class="toggle-group" style="margin-top:6px">
+                    <button class="toggle-btn active" data-value="EXPENSE">支出</button>
+                    <button class="toggle-btn" data-value="INCOME">收入</button>
+                </div>
+            </div>
             <div><label>金额</label><input id="txAmount" type="number" step="0.01"></div>
             <div><label>分类</label><input id="txCategory"></div>
             <div style="grid-column:1/-1"><label>描述</label><input id="txDesc"></div>
@@ -116,8 +127,16 @@
             <div><label>开始时间</label><input id="fStart" class="dt-trigger" placeholder="起始时间"></div>
             <div><label>结束时间</label><input id="fEnd" class="dt-trigger" placeholder="结束时间"></div>
             <div><label>分类搜索</label><input id="fCategory" placeholder="输入分类"></div>
-            <div><label>类型</label><select id="fType"><option value="">全部</option><option value="EXPENSE">支出</option><option value="INCOME">收入</option></select></div>
+            <div>
+                <label>类型</label>
+                <div class="toggle-group" style="margin-top:6px">
+                    <button class="toggle-btn active" data-value="">全部</button>
+                    <button class="toggle-btn" data-value="EXPENSE">支出</button>
+                    <button class="toggle-btn" data-value="INCOME">收入</button>
+                </div>
+            </div>
         </div>
+        <div class="hint" style="margin-top:8px;margin-bottom:8px">提示:日期筛选需要同时填写开始和结束时间,格式: YYYY-MM-DDTHH:mm:ss</div>
         <div style="margin-top:16px; display:flex; gap:12px;">
             <button class="btn btn-primary" id="btnApplyFilters">执行筛选</button>
             <button class="btn" id="btnClearFilters">重置筛选</button>
@@ -200,6 +219,256 @@
         localStorage.setItem('theme', t);
     };
     document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light';
+
+    // API基础配置
+    const base = '/api';
+    const token = localStorage.getItem('jwt');
+    if (!token) { location.href = '/login.html'; }
+
+    async function fetchJSON(url, opts) {
+        const r = await fetch(url, { ...opts, headers: { ...(opts && opts.headers || {}), 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token } });
+        if (r.status === 403) {
+            alert('登录已过期,请重新登录');
+            localStorage.removeItem('jwt');
+            location.href = '/login.html';
+            throw new Error('身份验证失败');
+        }
+        if (!r.ok) throw new Error('http ' + r.status);
+        return r.status === 204 ? null : await r.json();
+    }
+
+    // 获取DOM元素
+    const txAmount = document.getElementById('txAmount');
+    const txCategory = document.getElementById('txCategory');
+    const txDesc = document.getElementById('txDesc');
+    const txDate = document.getElementById('txDate');
+    const fStart = document.getElementById('fStart');
+    const fEnd = document.getElementById('fEnd');
+    const fCategory = document.getElementById('fCategory');
+
+    let editingId = null;
+    let txTypeValue = 'EXPENSE'; // 账目类型
+    let fTypeValue = ''; // 筛选类型
+
+    // 账目类型切换按钮
+    document.querySelectorAll('.surface')[0].querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.surface')[0].querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            txTypeValue = btn.getAttribute('data-value');
+        };
+    });
+
+    // 筛选类型切换按钮
+    document.querySelectorAll('.surface')[1].querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.surface')[1].querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            fTypeValue = btn.getAttribute('data-value');
+        };
+    });
+
+    // 保存账目
+    document.getElementById('btnSaveTx').onclick = async () => {
+        try {
+            const payload = {
+                type: txTypeValue,
+                amount: parseFloat(txAmount.value || '0'),
+                categoryId: txCategory.value || null,
+                description: txDesc.value || '',
+                date: txDate.value ? txDate.value : null
+            };
+
+            if (editingId) {
+                await fetchJSON(base + '/transactions/' + editingId, { method: 'PUT', body: JSON.stringify(payload) });
+                alert('✅ 账目更新成功');
+            } else {
+                await fetchJSON(base + '/transactions', { method: 'POST', body: JSON.stringify(payload) });
+                alert('✅ 账目添加成功');
+            }
+
+            // 重置表单
+            editingId = null;
+            txTypeValue = 'EXPENSE';
+            // 重置按钮状态
+            document.querySelectorAll('.surface')[0].querySelectorAll('.toggle-btn').forEach((b, i) => {
+                if (i === 0) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+            txAmount.value = '';
+            txCategory.value = '';
+            txDesc.value = '';
+            txDate.value = '';
+
+            // 重新加载账目列表
+            loadTransactions();
+        } catch (e) {
+            alert('❌ 保存失败: ' + e.message);
+        }
+    };
+
+    // 重置表单
+    document.getElementById('btnResetTx').onclick = () => {
+        editingId = null;
+        txTypeValue = 'EXPENSE';
+        // 重置按钮状态
+        document.querySelectorAll('.surface')[0].querySelectorAll('.toggle-btn').forEach((b, i) => {
+            if (i === 0) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+        txAmount.value = '';
+        txCategory.value = '';
+        txDesc.value = '';
+        txDate.value = '';
+    };
+
+    // 加载账目列表
+    async function loadTransactions() {
+        try {
+            // 构建查询参数
+            const params = new URLSearchParams();
+            if (fStart.value) {
+                // 确保时间格式正确
+                if (!fStart.value.includes('T')) {
+                    alert('❌ 开始时间格式不正确,需要包含时间部分(如: 2025-12-01T00:00:00)');
+                    return;
+                }
+                params.set('start', fStart.value);
+            }
+            if (fEnd.value) {
+                if (!fEnd.value.includes('T')) {
+                    alert('❌ 结束时间格式不正确,需要包含时间部分(如: 2025-12-31T23:59:59)');
+                    return;
+                }
+                params.set('end', fEnd.value);
+            }
+            // 注意:后端需要同时提供start和end才能进行日期筛选
+            if ((fStart.value && !fEnd.value) || (!fStart.value && fEnd.value)) {
+                alert('⚠️ 日期筛选需要同时填写开始和结束时间');
+                return;
+            }
+            if (fCategory.value) params.set('categoryId', fCategory.value);
+            if (fTypeValue) params.set('type', fTypeValue);
+
+            const url = params.toString() ? base + '/transactions?' + params.toString() : base + '/transactions';
+            console.log('查询URL:', url);
+            const arr = await fetchJSON(url);
+
+            // 创建表格显示(如果没有表格容器,先创建一个)
+            let container = document.getElementById('txListContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'txListContainer';
+                container.className = 'surface';
+                container.style.marginBottom = '16px';
+                document.querySelector('.container').appendChild(container);
+            }
+
+            if (!arr || arr.length === 0) {
+                container.innerHTML = '<div class="section-title">📊 账目列表</div><p style="color:var(--muted);text-align:center;padding:20px">暂无账目数据</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="section-title">📊 账目列表 (${arr.length}条)</div>
+                <table style="width:100%;border-collapse:collapse">
+                    <thead>
+                        <tr style="border-bottom:1px solid var(--line)">
+                            <th style="padding:12px;text-align:left;color:var(--muted);font-weight:600">类型</th>
+                            <th style="padding:12px;text-align:left;color:var(--muted);font-weight:600">金额</th>
+                            <th style="padding:12px;text-align:left;color:var(--muted);font-weight:600">分类</th>
+                            <th style="padding:12px;text-align:left;color:var(--muted);font-weight:600">描述</th>
+                            <th style="padding:12px;text-align:left;color:var(--muted);font-weight:600">日期</th>
+                            <th style="padding:12px;text-align:center;color:var(--muted);font-weight:600">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txTbody"></tbody>
+                </table>
+            `;
+
+            const tbody = document.getElementById('txTbody');
+            tbody.innerHTML = arr.map(tx => {
+                const typeColor = tx.type === 'EXPENSE' ? '#ef4444' : '#10b981';
+                const typeText = tx.type === 'EXPENSE' ? '支出' : '收入';
+                return `<tr style="border-bottom:1px solid var(--line)">
+                    <td style="padding:12px;color:${typeColor};font-weight:600">${typeText}</td>
+                    <td style="padding:12px;font-weight:600">¥${(tx.amount || 0).toFixed(2)}</td>
+                    <td style="padding:12px">${tx.categoryId || '-'}</td>
+                    <td style="padding:12px;color:var(--muted)">${tx.description || '-'}</td>
+                    <td style="padding:12px;font-size:13px">${tx.date ? tx.date.replace('T', ' ') : '-'}</td>
+                    <td style="padding:12px;text-align:center">
+                        <button class="btn" style="padding:6px 12px;font-size:12px" data-id="${tx.id}" data-action="edit">编辑</button>
+                        <button class="btn" style="padding:6px 12px;font-size:12px;margin-left:4px" data-id="${tx.id}" data-action="del">删除</button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            // 绑定按钮事件
+            tbody.onclick = async (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const id = btn.getAttribute('data-id');
+                const action = btn.getAttribute('data-action');
+
+                if (action === 'edit') {
+                    const tx = arr.find(t => t.id === id);
+                    if (tx) {
+                        editingId = id;
+                        txTypeValue = tx.type;
+                        // 更新按钮状态
+                        document.querySelectorAll('.surface')[0].querySelectorAll('.toggle-btn').forEach(b => {
+                            if (b.getAttribute('data-value') === tx.type) {
+                                b.classList.add('active');
+                            } else {
+                                b.classList.remove('active');
+                            }
+                        });
+                        txAmount.value = tx.amount;
+                        txCategory.value = tx.categoryId || '';
+                        txDesc.value = tx.description || '';
+                        txDate.value = tx.date || '';
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                } else if (action === 'del') {
+                    if (confirm('确定要删除这条账目吗?')) {
+                        await fetch(base + '/transactions/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+                        alert('✅ 删除成功');
+                        loadTransactions();
+                    }
+                }
+            };
+        } catch (e) {
+            console.error('加载账目失败:', e);
+            alert('加载账目失败: ' + e.message);
+        }
+    }
+
+    // 筛选按钮
+    document.getElementById('btnApplyFilters').onclick = () => {
+        console.log('执行筛选:', {
+            start: fStart.value,
+            end: fEnd.value,
+            category: fCategory.value,
+            type: fTypeValue
+        });
+        loadTransactions();
+    };
+
+    document.getElementById('btnClearFilters').onclick = () => {
+        fStart.value = '';
+        fEnd.value = '';
+        fCategory.value = '';
+        fTypeValue = '';
+        // 重置按钮状态
+        document.querySelectorAll('.surface')[1].querySelectorAll('.toggle-btn').forEach((b, i) => {
+            if (i === 0) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+        loadTransactions();
+    };
+
+    // 页面加载时自动加载账目
+    loadTransactions();
 </script>
 </body>
 </html>
