@@ -110,7 +110,8 @@
     const savedTheme=localStorage.getItem('theme')||'light'
     document.documentElement.dataset.theme=savedTheme
     document.getElementById('themeToggle').onclick=(e)=>{e.preventDefault();const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('theme',t)}
-    const base='/api'; const token=localStorage.getItem('jwt'); if(!token){location.href='/login.html'}
+    const base='/api'; const token=localStorage.getItem('jwt'); 
+    if(!token){console.error('未登录,跳转登录页');location.href='/login.html'}
     
     // 月度预算元素
     const bdYear=document.getElementById('bdYear')
@@ -144,7 +145,15 @@
 
     async function fetchJSON(url,opts){
         const r=await fetch(url,{...opts,headers:{...(opts&&opts.headers||{}),'Content-Type':'application/json','Authorization':'Bearer '+token}})
-        if(!r.ok) throw new Error('http '+r.status); return r.status===204?null:await r.json()
+        if(r.status === 403){
+            console.error('身份验证失败(403),token可能已过期')
+            alert('登录已过期,请重新登录')
+            localStorage.removeItem('jwt')
+            location.href='/login.html'
+            throw new Error('身份验证失败,请重新登录')
+        }
+        if(!r.ok) throw new Error('http '+r.status); 
+        return r.status===204?null:await r.json()
     }
 
     function nowYM(){const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()+1}}
