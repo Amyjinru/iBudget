@@ -217,6 +217,12 @@ public class MainApplication extends Application {
         });
         HBox budgetForm = new HBox(yearField, monthField, budgetCatField, budgetAmountField, btnSetBudget);
         budgetForm.setSpacing(10);
+        budgetBox.getChildren().addAll(new Label("预算设置"), budgetForm, budgetInfo);
+        
+        // 趋势页面
+        VBox trendsBox = new VBox();
+        trendsBox.setSpacing(10);
+        trendsBox.setStyle("-fx-padding: 16px;");
         
         // AI分析区域
         VBox aiBox = new VBox();
@@ -288,7 +294,20 @@ public class MainApplication extends Application {
         });
         
         aiBox.getChildren().addAll(aiTitle, aiDesc, btnAIAnalyze, aiResult);
-        budgetBox.getChildren().addAll(new Label("预算设置"), budgetForm, budgetInfo, aiBox);
+        
+        // 趋势数据展示
+        VBox trendsDataBox = new VBox();
+        trendsDataBox.setSpacing(10);
+        trendsDataBox.setStyle("-fx-padding: 16px; -fx-background-color: -fx-background; -fx-border-color: -fx-border; -fx-border-radius: 8px; -fx-background-radius: 8px;");
+        Label trendsTitle = new Label("📊 消费趋势分析");
+        trendsTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+        Label avgExpenseLabel = new Label("平均月支出: 计算中...");
+        Label trendLabel = new Label("趋势: 计算中...");
+        Label predictLabel = new Label("预测下月支出: 计算中...");
+        trendsDataBox.getChildren().addAll(trendsTitle, avgExpenseLabel, trendLabel, predictLabel);
+        
+        trendsBox.getChildren().addAll(aiBox, trendsDataBox);
+        budgetBox.getChildren().addAll(new Label("预算设置"), budgetForm, budgetInfo);
         // 图表页面
         Map<String, Double> catExpenseData = analyzer.categoryExpense(username.getText().isEmpty() ? "demo" : username.getText(), YearMonth.now());
         Map<String, Double> catIncomeData = analyzer.categoryIncome(username.getText().isEmpty() ? "demo" : username.getText(), YearMonth.now());
@@ -461,12 +480,14 @@ public class MainApplication extends Application {
         Tab authTab = new Tab("账号", authBox);
         Tab transactionsTab = new Tab("交易", txBox);
         Tab budgetTab = new Tab("预算", budgetBox);
+        Tab trendsTab = new Tab("趋势", trendsBox);
         Tab chartsTab = new Tab("图表", chartBox);
         authTab.setClosable(false);
         transactionsTab.setClosable(false);
         budgetTab.setClosable(false);
+        trendsTab.setClosable(false);
         chartsTab.setClosable(false);
-        tabPane.getTabs().addAll(authTab, transactionsTab, budgetTab, chartsTab);
+        tabPane.getTabs().addAll(authTab, transactionsTab, budgetTab, trendsTab, chartsTab);
         Scene scene = new Scene(tabPane, 1200, 800);
         String lightCss = MainApplication.class.getResource("/ui.css").toExternalForm();
         String darkCss = MainApplication.class.getResource("/ui-dark.css").toExternalForm();

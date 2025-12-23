@@ -18,6 +18,12 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .metric{display:flex;justify-content:space-between;margin:6px 0;color:var(--muted)}
 .chart{height:220px;border:1px dashed var(--line);border-radius:12px;position:relative}
 .line{position:absolute;left:0;top:0;width:100%;height:100%}
+.ai-card{margin-bottom:16px}
+.ai-analysis{background:var(--card);padding:16px;border-radius:12px;border:1px solid var(--line);line-height:1.8;white-space:pre-wrap;font-size:14px}
+.loading{color:var(--muted);font-style:italic}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;font-size:14px}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:0.6;cursor:not-allowed}
 @media (max-width:768px){.grid-2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -32,6 +38,19 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
       <a href="/charts.html">图表</a>
       <a href="/login.html">切换账号</a>
       <a href="#" id="themeToggle">暗色</a>
+    </div>
+  </div>
+
+  <div class="surface ai-card">
+    <div class="section-title">🤖 AI智能消费分析</div>
+    <div style="margin-bottom:12px;color:var(--muted);font-size:13px">
+      基于AI大模型分析你的消费趋势，提供个性化节省建议和超支提醒
+    </div>
+    <div>
+      <button class="btn btn-primary" id="btnAIAnalyze">🔍 开始AI分析</button>
+    </div>
+    <div id="aiResult" style="margin-top:16px;display:none">
+      <div class="ai-analysis" id="aiContent"></div>
     </div>
   </div>
 
@@ -87,6 +106,40 @@ function renderLine(values){
 }
 
 load()
+
+// AI分析功能
+document.getElementById('btnAIAnalyze').onclick=async()=>{
+  const btn=document.getElementById('btnAIAnalyze')
+  const result=document.getElementById('aiResult')
+  const content=document.getElementById('aiContent')
+  
+  btn.disabled=true
+  btn.textContent='🔄 分析中...'
+  result.style.display='block'
+  content.textContent='正在调用AI大模型进行深度分析，请稍候...'
+  content.className='ai-analysis loading'
+  
+  try{
+    const userId=JSON.parse(atob(token.split('.')[1])).sub
+    const d=new Date()
+    const resp=await fetchJSON(base+'/ai/analyze?userId='+encodeURIComponent(userId)+'&year='+d.getFullYear()+'&month='+(d.getMonth()+1),{method:'POST'})
+    
+    if(resp.status==='success'){
+      content.textContent=resp.analysis
+      content.className='ai-analysis'
+    }else{
+      content.textContent='❌ AI分析失败: '+(resp.error||'未知错误')
+      content.className='ai-analysis'
+    }
+  }catch(e){
+    content.textContent='❌ 调用AI服务失败: '+e.message
+    content.className='ai-analysis'
+  }finally{
+    btn.disabled=false
+    btn.textContent='🔍 开始AI分析'
+  }
+}
+
 function setupAutoReload(){
   let last = Number(localStorage.getItem('ledgerLastUpdate')||'0')
   function check(){
