@@ -46,14 +46,15 @@ public class MainApplication extends Application {
 
     @Override
     public void start(Stage stage) {
-        stage.setTitle("iBudget");
-        TabPane tabPane = new TabPane();
-        StorageManager storage = new StorageManager();
-        LocalTransactionService ts = new LocalTransactionService(storage);
-        LocalBudgetService bs = new LocalBudgetService(storage, ts);
-        LocalStatisticService ss = new LocalStatisticService(ts);
-        LocalAIAnalysisService aiService = new LocalAIAnalysisService();
-        ChartAnalyzer analyzer = new ChartAnalyzer(ss);
+        try {
+            stage.setTitle("iBudget");
+            TabPane tabPane = new TabPane();
+            StorageManager storage = new StorageManager();
+            LocalTransactionService ts = new LocalTransactionService(storage);
+            LocalBudgetService bs = new LocalBudgetService(storage, ts);
+            LocalStatisticService ss = new LocalStatisticService(ts);
+            LocalAIAnalysisService aiService = new LocalAIAnalysisService();
+            ChartAnalyzer analyzer = new ChartAnalyzer(ss);
         ApiClient api = new ApiClient("http://localhost:8080");
         VBox authBox = new VBox();
         authBox.setSpacing(10);
@@ -304,7 +305,6 @@ public class MainApplication extends Application {
         trendsDataBox.getChildren().addAll(trendsTitle, avgExpenseLabel, trendLabel, predictLabel);
         
         trendsBox.getChildren().addAll(aiBox, trendsDataBox);
-        budgetBox.getChildren().addAll(new Label("预算设置"), budgetForm, budgetInfo);
         // 图表页面
         Map<String, Double> catExpenseData = analyzer.categoryExpense(username.getText().isEmpty() ? "demo" : username.getText(), YearMonth.now());
         Map<String, Double> catIncomeData = analyzer.categoryIncome(username.getText().isEmpty() ? "demo" : username.getText(), YearMonth.now());
@@ -500,5 +500,9 @@ public class MainApplication extends Application {
         authBox.getChildren().add(0, darkToggle);
         stage.setScene(scene);
         stage.show();
+        } catch (Throwable t) {
+            System.err.println("ERROR: Application start failed:");
+            t.printStackTrace();
+        }
     }
 }

@@ -2,6 +2,8 @@
 .root {
     -fx-font-family: -apple-system, "Segoe UI", Helvetica, Arial, system-ui;
     -fx-background-color: #f7f8f9;
+    -fx-background: white;
+    -fx-border: #e5e7eb;
 }
 .tab-pane {
     -fx-padding: 16px;

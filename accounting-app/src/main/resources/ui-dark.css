@@ -1,6 +1,8 @@
 .root {
     -fx-font-family: -apple-system, "Segoe UI", Helvetica, Arial, system-ui;
     -fx-background-color: #0b0e11;
+    -fx-background: #12151a;
+    -fx-border: #2a2f37;
 }
 .label { -fx-text-fill: #e5e7eb; }
 .text-field, .combo-box {
