@@ -23,7 +23,7 @@ public class AIAnalysisService {
     
     public AIAnalysisService() {
         this.httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
+            .connectTimeout(Duration.ofSeconds(60))
             .build();
         this.objectMapper = new ObjectMapper();
     }
@@ -114,7 +114,7 @@ public class AIAnalysisService {
             .header("Content-Type", "application/json")
             .header("Authorization", "Bearer " + API_KEY)
             .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
-            .timeout(Duration.ofSeconds(30))
+            .timeout(Duration.ofSeconds(60))
             .build();
         
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
