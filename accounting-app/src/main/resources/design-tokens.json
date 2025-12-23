@@ -1,0 +1,20 @@
+{
+  "light": {
+    "bg": "#f7f8f9",
+    "card": "#ffffff",
+    "text": "#0f172a",
+    "muted": "#64748b",
+    "line": "#e5e7eb",
+    "accent": "#0a84ff",
+    "warn": "#d33"
+  },
+  "dark": {
+    "bg": "#0b0e11",
+    "card": "#12151a",
+    "text": "#e5e7eb",
+    "muted": "#94a3b8",
+    "line": "#2a2f37",
+    "accent": "#0a84ff",
+    "warn": "#ef4444"
+  }
+}
