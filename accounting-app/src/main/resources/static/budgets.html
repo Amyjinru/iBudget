@@ -1,124 +1,89 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>预算 · iBudget</title>
-    <style>
-        :root{--bg:#f7f8f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--accent:#0a84ff;--warn:#d33}
-        /* 1. 修正暗色变量：确保文字为高对比度白色 */
-        [data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#f8fafc;--muted:#94a3b8;--line:#334155;--accent:#38bdf8;--warn:#ef4444}
-        *{box-sizing:border-box}
-        body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,system-ui}
-        .container{max-width:1080px;margin:0 auto;padding:24px}
-        .header{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
-        .nav a{color:var(--muted);text-decoration:none;margin-left:12px}
-        /* 2. 核心修正：显式指定标题颜色为变量 text，确保在暗色下变白 */
-        .surface{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04); color: var(--text);}
-        .section-title{display:flex;align-items:center;gap:8px;margin:0 0 12px 0;font-size:16px;font-weight:600; color: var(--text);}
-        .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-        label{font-size:12px;color:var(--muted);font-weight:600}
-        input{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--text);outline:none}
-        [data-theme="dark"] input{background:var(--bg)}
-        input:focus{border-color:var(--accent)}
-        .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
-        [data-theme="dark"] .btn{background:var(--card)}
-        .btn-primary{background:var(--accent);border-color:var(--accent);color:var(--text)} /* 修改此处文字颜色为--text变量 */
-        .table{width:100%;border-collapse:separate;border-spacing:0 8px}
-        .table th{font-weight:600;color:var(--muted);text-align:left;padding:8px 10px}
-        .table td{background:var(--card);border:1px solid var(--line);border-left:none;border-right:none;padding:12px 10px}
-        .table tr td:first-child{border-left:1px solid var(--line);border-radius:10px 0 0 10px}
-        .table tr td:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}
-        /* 3. 修复使用率进度条高度与垂直居中 */
-        .usage{display:flex;align-items:center;gap:10px;height:20px}
-        .bar-bg{flex:1;background:var(--bg);border-radius:999px;height:8px;overflow:hidden;border:1px solid var(--line)}
-        .bar{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),#71b6ff)}
-        .alert{color:var(--warn);font-size:13px;font-weight:bold}
-        @media (max-width:768px){.grid-2{grid-template-columns:1fr}}
-    </style>
-</head>
-<body>
-<div class="container">
-    <div class="header">
-        <div style="font-weight:800;font-size:1.2rem">iBudget</div>
-        <div class="nav">
-            <a href="/transactions.html">账目</a>
-            <a href="/budgets.html">预算</a>
-            <a href="/trends.html">趋势</a>
-            <a href="/charts.html">图表</a>
-            <a href="/login.html">切换账号</a>
-            <a href="#" id="themeToggle" style="color:var(--accent);font-weight:800">切换主题</a>
-        </div>
-    </div>
-
-    <div class="surface" style="margin-bottom:16px">
-        <div class="section-title">月度预算设置</div>
-        <div class="grid-2">
-            <div><label>年份</label><input id="bdYear" type="number"></div>
-            <div><label>月份</label><input id="bdMonth" type="number" min="1" max="12"></div>
-            <div><label>分类（留空表示总预算）</label><input id="bdCategory"></div>
-            <div><label>预算金额</label><input id="bdAmount" type="number" step="0.01"></div>
-        </div>
-        <div style="margin-top:12px">
-            <button class="btn btn-primary" id="btnSetBudget">设置预算</button>
-        </div>
-    </div>
-
-    <div class="surface" style="margin-bottom:16px">
-        <div class="section-title">预算列表与智能提醒</div>
-        <table class="table">
-            <thead><tr><th>分类</th><th>金额</th><th>年月</th><th>使用率</th><th>提醒</th><th>操作</th></tr></thead>
-            <tbody id="bdTbody"></tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    // 脚本逻辑保持不变，仅更新了渲染字符串中的 HTML 类名
-    const savedTheme=localStorage.getItem('theme')||'light'
-    document.documentElement.dataset.theme=savedTheme
-    document.getElementById('themeToggle').onclick=(e)=>{e.preventDefault();const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('theme',t)}
-    const base='/api'; const token=localStorage.getItem('jwt'); if(!token){location.href='/login.html'}
-    const bdYear=document.getElementById('bdYear'); const bdMonth=document.getElementById('bdMonth'); const bdCategory=document.getElementById('bdCategory'); const bdAmount=document.getElementById('bdAmount'); const bdTbody=document.getElementById('bdTbody')
-
-    async function fetchJSON(url,opts){
-        const r=await fetch(url,{...opts,headers:{...(opts&&opts.headers||{}),'Content-Type':'application/json','Authorization':'Bearer '+token}})
-        if(!r.ok) throw new Error('http '+r.status); return r.status===204?null:await r.json()
-    }
-
-    function nowYM(){const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()+1}}
-    const nym=nowYM(); bdYear.value=nym.year; bdMonth.value=nym.month
-
-    document.getElementById('btnSetBudget').onclick=async()=>{
-        const payload={year:parseInt(bdYear.value),month:parseInt(bdMonth.value),categoryId:(bdCategory.value||null),amount:parseFloat(bdAmount.value||'0')}
-        await fetchJSON(base+'/budgets',{method:'POST',body:JSON.stringify(payload)})
-        loadBudgets()
-    }
-
     async function usageInfo(userBudget){
         const q=new URLSearchParams({year:userBudget.year,month:userBudget.month}); if(userBudget.categoryId) q.set('categoryId',userBudget.categoryId)
         return await fetchJSON(base+'/budgets/usage?'+q.toString())
+    }
+    
+    // 获取预算统计数据
+    async function getStats(budgetId){
+        try{
+            return await fetchJSON(base+'/budgets/stats/'+budgetId)
+        }catch(e){
+            console.error('获取统计失败:',e)
+            return null
+        }
+    }
+    
+    // 格式化周期显示
+    function formatPeriod(b){
+        if(b.startDate && b.periodUnit){
+            const unitMap={DAYS:'天',WEEKS:'周',MONTHS:'月',YEARS:'年'}
+            const unit=unitMap[b.periodUnit]||b.periodUnit
+            return `${b.startDate} 起 ${b.periodCount}${unit}`
+        }
+        return `${b.year}-${String(b.month).padStart(2,'0')}`
     }
 
     async function loadBudgets(){
         try{
             const arr=await fetchJSON(base+'/budgets')
+            if(!arr || arr.length===0){
+                bdTbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted)">暂无预算数据,请先创建预算</td></tr>'
+                return
+            }
+            
             const rows = await Promise.all(arr.map(async b=>{
-                const u=await usageInfo(b)
-                const ratePct=Math.round((u.rate||0)*100)
-                const alert=u.over?`<span class='alert'>超额 ${u.overAmount.toFixed(2)}</span>`:''
-                /* 修正：这里使用了 .bar-bg 以匹配 CSS 中修复的高度 */
+                let ratePct=0, statusHtml=''
+                
+                if(b.startDate && b.periodUnit){
+                    // 周期型预算 - 使用统计分析
+                    const stats=await getStats(b.id)
+                    if(stats){
+                        ratePct=Math.round((stats.amountSpent/b.amount)*100)
+                        
+                        if(stats.willBeOverspentByAvg){
+                            statusHtml=`<span class='alert'>⚠️ 预测超支 ¥${Math.abs(stats.projectedRemainingByAvgSoFar).toFixed(2)}</span>`
+                        }else if(stats.remaining<0){
+                            statusHtml=`<span class='alert'>超额 ¥${Math.abs(stats.remaining).toFixed(2)}</span>`
+                        }else if(ratePct>=80){
+                            statusHtml=`<span style='color:var(--warn)'>预警 ${ratePct}%</span>`
+                        }else{
+                            statusHtml=`<span style='color:var(--accent)'>✓ 健康</span>`
+                        }
+                    }
+                }else{
+                    // 月度预算 - 使用原有逻辑
+                    try{
+                        const u=await usageInfo(b)
+                        ratePct=Math.round((u.rate||0)*100)
+                        if(u.over){
+                            statusHtml=`<span class='alert'>超额 ¥${u.overAmount.toFixed(2)}</span>`
+                        }else if(ratePct>=80){
+                            statusHtml=`<span style='color:var(--warn)'>预警 ${ratePct}%</span>`
+                        }else{
+                            statusHtml=`<span style='color:var(--accent)'>✓ 正常</span>`
+                        }
+                    }catch(e){
+                        console.error('获取预算使用率失败:', e)
+                    }
+                }
+                
                 return `<tr>
         <td>${b.categoryId||'总预算'}</td>
-        <td style='text-align:right;font-weight:bold'>${(b.amount||0).toFixed(2)}</td>
-        <td>${b.year}-${String(b.month).padStart(2,'0')}</td>
+        <td style='text-align:right;font-weight:bold'>¥${(b.amount||0).toFixed(2)}</td>
+        <td>${formatPeriod(b)}</td>
         <td><div class='usage'><div class='bar-bg'><div class='bar' style='width:${Math.min(ratePct,100)}%'></div></div><span style='font-size:12px;min-width:35px'>${ratePct}%</span></div></td>
-        <td>${alert}</td>
-        <td><button class='btn' data-id='${b.id}' data-action='del'>删除</button></td>
+        <td>${statusHtml}</td>
+        <td>
+            ${b.startDate?`<button class='btn' data-id='${b.id}' data-action='detail'>详情</button> `:''}
+            <button class='btn' data-id='${b.id}' data-action='del'>删除</button>
+        </td>
       </tr>`
             }))
             bdTbody.innerHTML=rows.join('')
-        }catch{bdTbody.innerHTML='<tr><td colspan="6">加载失败</td></tr>'}
+        }catch(e){
+            console.error('加载预算失败:', e)
+            bdTbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--warn)">加载失败: '+e.message+'</td></tr>'
+        }
     }
 
     bdTbody.onclick=async(e)=>{
@@ -127,9 +92,44 @@
         if(action==='del'){
             await fetch(base+'/budgets/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}})
             loadBudgets()
+        }else if(action==='detail'){
+            showBudgetDetail(id)
         }
     }
+    
+    // 显示预算详细统计
+    async function showBudgetDetail(budgetId){
+        const stats=await getStats(budgetId)
+        if(!stats||!stats.budget.startDate){
+            alert('该预算暂无详细统计数据')
+            return
+        }
+        
+        const s=stats
+        let msg=`📊 预算统计分析\n\n`
+        msg+=`📅 周期: ${s.budget.startDate} 至 ${s.budget.endDate}\n`
+        msg+=`💰 总预算: ¥${s.budget.amount.toFixed(2)}\n`
+        msg+=`✅ 已消费: ¥${s.amountSpent.toFixed(2)}\n`
+        msg+=`💵 剩余: ¥${s.remaining.toFixed(2)}\n\n`
+        msg+=`📈 日均预算: ¥${s.avgPerDayBudget.toFixed(2)}/天\n`
+        msg+=`📉 实际日均: ¥${s.avgPerDayActual.toFixed(2)}/天\n`
+        msg+=`⏱️ 已经过 ${s.daysElapsed}/${s.totalDays} 天\n\n`
+        
+        if(s.willBeOverspentByAvg){
+            msg+=`⚠️ 超支预警: 按当前速率，预计总消费 ¥${s.projectedTotalByAvgSoFar.toFixed(2)}\n`
+            msg+=`   预计超支 ¥${Math.abs(s.projectedRemainingByAvgSoFar).toFixed(2)}\n\n`
+        }else{
+            msg+=`✅ 预算健康: 按当前速率，预计剩余 ¥${s.projectedRemainingByAvgSoFar.toFixed(2)}\n\n`
+        }
+        
+        if(s.last7DaysSpent>0){
+            msg+=`📆 近7天消费: ¥${s.last7DaysSpent.toFixed(2)}\n`
+        }
+        if(s.last30DaysSpent>0){
+            msg+=`📆 近30天消费: ¥${s.last30DaysSpent.toFixed(2)}\n`
+        }
+        
+        alert(msg)
+    }
+    
     loadBudgets()
-</script>
-</body>
-</html>
