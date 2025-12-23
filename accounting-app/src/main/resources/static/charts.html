@@ -14,10 +14,18 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
 .nav a{color:var(--muted);text-decoration:none;margin-left:12px}
 .surface{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .section-title{display:flex;align-items:center;gap:8px;margin:0 0 12px 0;font-size:16px;font-weight:600}
-.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.chart{height:240px;border:1px dashed var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center}
-.bar{width:20px;background:#0a84ff22;border:1px solid #0a84ff55}
-@media (max-width:768px){.grid-3{grid-template-columns:1fr}}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;margin:0 0 16px 0;color:var(--text);display:flex;align-items:center}
+.chart{height:280px;display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative}
+.chart-small{height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.bar{width:20px;background:#0a84ff22;border:1px solid #0a84ff55;border-radius:4px 4px 0 0}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-top:12px}
+.stat-item{text-align:center;padding:8px;background:var(--bg);border-radius:8px}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.stat-value{font-size:14px;font-weight:600;color:var(--text)}
+@media (max-width:968px){.grid-3{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -34,22 +42,67 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
     </div>
   </div>
 
-  <div class="surface">
-    <div class="section-title">饼状图 / 折线图 / 柱状图</div>
-    <div class="grid-3">
+  <div class="card">
+    <div class="card-title">📊 饼状图</div>
+    <div class="grid-2">
       <div>
-        <label style="color:var(--muted)">本月按分类支出（饼图）</label>
-        <div id="pieChart" class="chart"></div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-align:center">支出分类</div>
+        <div id="expensePieChart" class="chart-small"></div>
       </div>
       <div>
-        <label style="color:var(--muted)">最近月份支出（折线图）</label>
-        <div id="lineChart" class="chart"></div>
-      </div>
-      <div>
-        <label style="color:var(--muted)">最近月份支出（柱状图）</label>
-        <div id="barChart" class="chart" style="align-items:flex-end;gap:6px"></div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-align:center">收入分类</div>
+        <div id="incomePieChart" class="chart-small"></div>
       </div>
     </div>
+    <div id="pieStats" class="stats-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      📈 折线图
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <select id="linePeriodSelect" style="padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font-size:12px">
+          <option value="month" selected>月度统计</option>
+          <option value="year">年度统计</option>
+        </select>
+        <select id="lineRangeSelect" style="padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font-size:12px">
+          <option value="6">6个</option>
+          <option value="12" selected>12个</option>
+          <option value="24">24个</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-align:center">支出趋势</div>
+        <div id="expenseLineChart" class="chart-small"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-align:center">收入趋势</div>
+        <div id="incomeLineChart" class="chart-small"></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-align:center">净收入趋势</div>
+        <div id="netLineChart" class="chart-small"></div>
+      </div>
+    </div>
+    <div id="lineStats" class="stats-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      📊 月度收支对比柱状图
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <select id="barYearSelect" style="padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font-size:12px"></select>
+        <select id="barMonthsSelect" style="padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font-size:12px">
+          <option value="6">6个月</option>
+          <option value="12" selected>12个月</option>
+          <option value="24">24个月</option>
+        </select>
+      </div>
+    </div>
+    <div id="barChart" class="chart" style="align-items:flex-end;padding:20px"></div>
+    <div id="barStats" class="stats-grid"></div>
   </div>
 </div>
 
@@ -65,48 +118,325 @@ async function fetchJSON(url,opts){
   return r.status===204?null:await r.json()
 }
 
-function renderLine(values){
-  const cont=document.getElementById('lineChart'); cont.innerHTML=''
-  const w=cont.clientWidth||320, h=240; const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('width',w); svg.setAttribute('height',h)
-  const max=Math.max(...values,1); const step=w/(values.length-1)
-  let d=''; values.forEach((v,i)=>{const x=Math.round(i*step); const y=Math.round(h-10-(h-20)*(v/max)); d+= (i===0?`M${x},${y}`:` L${x},${y}`)})
-  const path=document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d',d); path.setAttribute('stroke','#0a84ff'); path.setAttribute('fill','none'); path.setAttribute('stroke-width','2')
-  svg.appendChild(path); cont.appendChild(svg)
-}
-
-function renderBars(values){
-  const cont=document.getElementById('barChart'); cont.innerHTML=''
+function renderLine(containerId, values, color='#0a84ff', labels=[]){
+  const cont=document.getElementById(containerId); cont.innerHTML=''
+  if(!values || values.length===0){cont.innerHTML='<div style="color:var(--muted);font-size:12px">暂无数据</div>'; return}
+  const w=cont.clientWidth||200, h=130
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg')
+  svg.setAttribute('width',w); svg.setAttribute('height',h)
   const max=Math.max(...values,1)
-  values.forEach(v=>{const h=Math.round(200*(v/max)); const d=document.createElement('div'); d.className='bar'; d.style.height=h+'px'; cont.appendChild(d)})
+  const min=Math.min(...values,0)
+  const range=max-min||1
+  const step=values.length>1 ? w/(values.length-1) : w/2
+  let d=''
+  values.forEach((v,i)=>{
+    const x=Math.round(i*step)
+    const y=Math.round(h-10-(h-30)*((v-min)/range))
+    d+= (i===0?`M${x},${y}`:` L${x},${y}`)
+  })
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path')
+  path.setAttribute('d',d)
+  path.setAttribute('stroke',color)
+  path.setAttribute('fill','none')
+  path.setAttribute('stroke-width','2')
+  svg.appendChild(path)
+  cont.appendChild(svg)
+  
+  if(labels.length>0){
+    const labelsDiv=document.createElement('div')
+    labelsDiv.style.cssText='display:grid;grid-template-columns:repeat('+labels.length+',1fr);margin-top:6px;font-size:10px;color:var(--muted);gap:2px'
+    labels.forEach(label=>{
+      const span=document.createElement('span')
+      span.textContent=label
+      span.style.cssText='text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis'
+      labelsDiv.appendChild(span)
+    })
+    cont.appendChild(labelsDiv)
+  }
 }
 
-function renderPie(map){
-  const cont=document.getElementById('pieChart'); cont.innerHTML=''
-  const w=240,h=240,r=100,cx=120,cy=120; const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('width',w); svg.setAttribute('height',h)
-  const values=Object.values(map); const labels=Object.keys(map); const sum=values.reduce((a,b)=>a+b,0)||1
-  let start=0; const colors=['#0a84ff','#4f46e5','#10b981','#f59e0b','#ef4444','#14b8a6','#8b5cf6','#22c55e']
-  values.forEach((v,i)=>{
-    const part=v/sum; const end=start+part; const a1=start*2*Math.PI, a2=end*2*Math.PI
-    const x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1)
-    const x2=cx+r*Math.cos(a2), y2=cy+r*Math.sin(a2)
-    const large= (end-start)>0.5 ? 1 : 0
-    const path=document.createElementNS('http://www.w3.org/2000/svg','path')
-    const d=`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`
-    path.setAttribute('d',d); path.setAttribute('fill',colors[i%colors.length]); path.setAttribute('opacity','0.8')
-    svg.appendChild(path)
-    start=end
+function renderBars(incomes, expenses, labels=[]){
+  const cont=document.getElementById('barChart'); cont.innerHTML=''
+  if(!expenses || expenses.length===0){cont.innerHTML='<div style="color:var(--muted)">暂无数据</div>'; return}
+  const max=Math.max(...expenses,...incomes,1)
+  
+  const wrapper=document.createElement('div')
+  wrapper.style.cssText='width:100%;height:100%;display:flex;flex-direction:column'
+  
+  const chartArea=document.createElement('div')
+  chartArea.style.cssText='flex:1;display:grid;grid-template-columns:repeat('+labels.length+',1fr);gap:8px;align-items:flex-end;padding:0 10px'
+  
+  expenses.forEach((exp,i)=>{
+    const pair=document.createElement('div')
+    pair.style.cssText='display:flex;gap:3px;align-items:flex-end;justify-content:center'
+    
+    const inc=incomes[i]||0
+    const hInc=Math.round(180*(inc/max))
+    const hExp=Math.round(180*(exp/max))
+    
+    const barInc=document.createElement('div')
+    barInc.style.cssText=`width:100%;max-width:20px;height:${hInc}px;background:#10b98144;border:1px solid #10b981;border-radius:4px 4px 0 0`
+    barInc.title=`收入: ${inc.toFixed(2)}`
+    
+    const barExp=document.createElement('div')
+    barExp.style.cssText=`width:100%;max-width:20px;height:${hExp}px;background:#ef444444;border:1px solid #ef4444;border-radius:4px 4px 0 0`
+    barExp.title=`支出: ${exp.toFixed(2)}`
+    
+    pair.appendChild(barInc)
+    pair.appendChild(barExp)
+    chartArea.appendChild(pair)
   })
+  wrapper.appendChild(chartArea)
+  
+  if(labels.length>0){
+    const labelsDiv=document.createElement('div')
+    labelsDiv.style.cssText='display:grid;grid-template-columns:repeat('+labels.length+',1fr);margin-top:10px;font-size:11px;color:var(--muted);gap:8px;padding:0 10px'
+    labels.forEach(label=>{
+      const span=document.createElement('span')
+      span.textContent=label
+      span.style.cssText='text-align:center;white-space:nowrap'
+      labelsDiv.appendChild(span)
+    })
+    wrapper.appendChild(labelsDiv)
+  }
+  
+  cont.appendChild(wrapper)
+  
+  const legend=document.createElement('div')
+  legend.style.cssText='display:flex;gap:12px;margin-top:12px;font-size:12px;justify-content:center'
+  const incItem=document.createElement('div')
+  incItem.style.cssText='display:flex;align-items:center;gap:4px'
+  const incBox=document.createElement('div')
+  incBox.style.cssText='width:12px;height:12px;background:#10b981;border-radius:2px'
+  incItem.appendChild(incBox)
+  incItem.appendChild(document.createTextNode('收入'))
+  const expItem=document.createElement('div')
+  expItem.style.cssText='display:flex;align-items:center;gap:4px'
+  const expBox=document.createElement('div')
+  expBox.style.cssText='width:12px;height:12px;background:#ef4444;border-radius:2px'
+  expItem.appendChild(expBox)
+  expItem.appendChild(document.createTextNode('支出'))
+  legend.appendChild(incItem)
+  legend.appendChild(expItem)
+  cont.appendChild(legend)
+}
+
+function renderPie(containerId, map){
+  const cont=document.getElementById(containerId); cont.innerHTML=''
+  const values=Object.values(map); const labels=Object.keys(map)
+  if(values.length===0){cont.innerHTML='<div style="color:var(--muted);font-size:12px">暂无数据</div>'; return}
+  
+  const w=200,h=150,r=55,cx=100,cy=75
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg')
+  svg.setAttribute('width',w); svg.setAttribute('height',h)
+  const sum=values.reduce((a,b)=>a+b,0)||1
+  let start=0
+  const colors=['#0a84ff','#4f46e5','#10b981','#f59e0b','#ef4444','#14b8a6','#8b5cf6','#22c55e']
+  
+  if(values.length===1){
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle')
+    circle.setAttribute('cx',cx); circle.setAttribute('cy',cy); circle.setAttribute('r',r)
+    circle.setAttribute('fill',colors[0]); circle.setAttribute('opacity','0.8')
+    svg.appendChild(circle)
+  }else{
+    values.forEach((v,i)=>{
+      const part=v/sum; const end=start+part
+      const a1=start*2*Math.PI-Math.PI/2, a2=end*2*Math.PI-Math.PI/2
+      const x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1)
+      const x2=cx+r*Math.cos(a2), y2=cy+r*Math.sin(a2)
+      const large= (end-start)>0.5 ? 1 : 0
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path')
+      const d=`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`
+      path.setAttribute('d',d); path.setAttribute('fill',colors[i%colors.length]); path.setAttribute('opacity','0.8')
+      svg.appendChild(path)
+      start=end
+    })
+  }
   cont.appendChild(svg)
+  
+  const legend=document.createElement('div')
+  legend.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:11px;justify-content:center'
+  labels.slice(0,3).forEach((label,i)=>{
+    const item=document.createElement('div')
+    item.style.cssText='display:flex;align-items:center;gap:3px'
+    const colorBox=document.createElement('div')
+    colorBox.style.cssText=`width:10px;height:10px;background:${colors[i%colors.length]};border-radius:2px;opacity:0.8`
+    const text=document.createElement('span')
+    text.textContent=`${label.length>4?label.substr(0,4)+'...':label}`
+    text.style.color='var(--muted)'
+    item.appendChild(colorBox)
+    item.appendChild(text)
+    legend.appendChild(item)
+  })
+  if(labels.length>3){
+    const more=document.createElement('span')
+    more.style.color='var(--muted)'
+    more.textContent=`+${labels.length-3}`
+    legend.appendChild(more)
+  }
+  cont.appendChild(legend)
+}
+
+function renderStats(containerId, stats){
+  const cont=document.getElementById(containerId); cont.innerHTML=''
+  stats.forEach(s=>{
+    const item=document.createElement('div')
+    item.className='stat-item'
+    const label=document.createElement('div')
+    label.className='stat-label'
+    label.textContent=s.label
+    const value=document.createElement('div')
+    value.className='stat-value'
+    value.textContent=s.value
+    item.appendChild(label)
+    item.appendChild(value)
+    cont.appendChild(item)
+  })
 }
 
 async function load(){
-  const months=12
-  const m=await fetchJSON(base+'/stats/monthly?months='+months)
-  renderLine(m.expenses)
-  renderBars(m.expenses)
-  const d=new Date(); const ym=`year=${d.getFullYear()}&month=${d.getMonth()+1}`
-  const cat=await fetchJSON(base+'/stats/category?'+ym)
-  renderPie(cat)
+  const d=new Date()
+  const yearSelect=document.getElementById('barYearSelect')
+  const monthsSelect=document.getElementById('barMonthsSelect')
+  const linePeriodSelect=document.getElementById('linePeriodSelect')
+  const lineRangeSelect=document.getElementById('lineRangeSelect')
+  
+  for(let y=d.getFullYear();y>=d.getFullYear()-5;y--){
+    const opt=document.createElement('option')
+    opt.value=y
+    opt.textContent=y+'年'
+    if(y===d.getFullYear()) opt.selected=true
+    yearSelect.appendChild(opt)
+  }
+  
+  async function loadData(){
+    const barMonths=parseInt(monthsSelect.value)
+    const endYear=parseInt(yearSelect.value)
+    const endMonth=d.getFullYear()===endYear ? d.getMonth() : 11
+    
+    const linePeriod=linePeriodSelect.value
+    const lineRange=parseInt(lineRangeSelect.value)
+    
+    const transactions=await fetchJSON(base+'/transactions')
+    const thisMonth=transactions.filter(t=>{
+      const date=new Date(t.date)
+      return date.getFullYear()===d.getFullYear() && date.getMonth()===d.getMonth()
+    })
+    
+    const expenseCat={}, incomeCat={}
+    thisMonth.forEach(t=>{
+      const cat=t.categoryId||'未分类'
+      if(t.type==='EXPENSE'){
+        expenseCat[cat]=(expenseCat[cat]||0)+t.amount
+      }else if(t.type==='INCOME'){
+        incomeCat[cat]=(incomeCat[cat]||0)+t.amount
+      }
+    })
+    
+    const barIncomes=[], barExpenses=[], barLabels=[]
+    for(let i=barMonths-1;i>=0;i--){
+      const md=new Date(endYear,endMonth-i,1)
+      const monthTrans=transactions.filter(t=>{
+        const td=new Date(t.date)
+        return td.getFullYear()===md.getFullYear() && td.getMonth()===md.getMonth()
+      })
+      const income=monthTrans.filter(t=>t.type==='INCOME').reduce((s,t)=>s+t.amount,0)
+      const expense=monthTrans.filter(t=>t.type==='EXPENSE').reduce((s,t)=>s+t.amount,0)
+      barIncomes.push(income)
+      barExpenses.push(expense)
+      barLabels.push((md.getMonth()+1)+'月')
+    }
+    
+    const lineIncomes=[], lineExpenses=[], lineNets=[], lineLabels=[]
+    if(linePeriod==='month'){
+      for(let i=lineRange-1;i>=0;i--){
+        const md=new Date(d.getFullYear(),d.getMonth()-i,1)
+        const monthTrans=transactions.filter(t=>{
+          const td=new Date(t.date)
+          return td.getFullYear()===md.getFullYear() && td.getMonth()===md.getMonth()
+        })
+        const income=monthTrans.filter(t=>t.type==='INCOME').reduce((s,t)=>s+t.amount,0)
+        const expense=monthTrans.filter(t=>t.type==='EXPENSE').reduce((s,t)=>s+t.amount,0)
+        lineIncomes.push(income)
+        lineExpenses.push(expense)
+        lineNets.push(income-expense)
+        lineLabels.push((md.getMonth()+1)+'月')
+      }
+    }else{
+      for(let i=lineRange-1;i>=0;i--){
+        const year=d.getFullYear()-i
+        const yearTrans=transactions.filter(t=>{
+          const td=new Date(t.date)
+          return td.getFullYear()===year
+        })
+        const income=yearTrans.filter(t=>t.type==='INCOME').reduce((s,t)=>s+t.amount,0)
+        const expense=yearTrans.filter(t=>t.type==='EXPENSE').reduce((s,t)=>s+t.amount,0)
+        lineIncomes.push(income)
+        lineExpenses.push(expense)
+        lineNets.push(income-expense)
+        lineLabels.push(year+'年')
+      }
+    }
+    
+    renderPie('expensePieChart', expenseCat)
+    renderPie('incomePieChart', incomeCat)
+    
+    const totalExpense=Object.values(expenseCat).reduce((a,b)=>a+b,0)
+    const totalIncome=Object.values(incomeCat).reduce((a,b)=>a+b,0)
+    renderStats('pieStats',[
+      {label:'总支出',value:'¥'+totalExpense.toFixed(2)},
+      {label:'总收入',value:'¥'+totalIncome.toFixed(2)},
+      {label:'净收入',value:'¥'+(totalIncome-totalExpense).toFixed(2)}
+    ])
+    
+    renderLine('expenseLineChart', lineExpenses, '#ef4444', lineLabels)
+    renderLine('incomeLineChart', lineIncomes, '#10b981', lineLabels)
+    renderLine('netLineChart', lineNets, '#0a84ff', lineLabels)
+    
+    const avgExpense=lineExpenses.reduce((a,b)=>a+b,0)/lineExpenses.length
+    const avgIncome=lineIncomes.reduce((a,b)=>a+b,0)/lineIncomes.length
+    const avgNet=lineNets.reduce((a,b)=>a+b,0)/lineNets.length
+    const periodText=linePeriod==='month'?'月均':'年均'
+    renderStats('lineStats',[
+      {label:periodText+'支出',value:'¥'+avgExpense.toFixed(2)},
+      {label:periodText+'收入',value:'¥'+avgIncome.toFixed(2)},
+      {label:periodText+'净收入',value:'¥'+avgNet.toFixed(2)}
+    ])
+    
+    renderBars(barIncomes, barExpenses, barLabels)
+    renderStats('barStats',[
+      {label:'总支出',value:'¥'+barExpenses.reduce((a,b)=>a+b,0).toFixed(2)},
+      {label:'总收入',value:'¥'+barIncomes.reduce((a,b)=>a+b,0).toFixed(2)},
+      {label:'统计月数',value:barMonths+'个月'}
+    ])
+  }
+  
+  yearSelect.onchange=loadData
+  monthsSelect.onchange=loadData
+  linePeriodSelect.onchange=()=>{
+    const period=linePeriodSelect.value
+    lineRangeSelect.innerHTML=''
+    if(period==='month'){
+      [6,12,24].forEach(n=>{
+        const opt=document.createElement('option')
+        opt.value=n
+        opt.textContent=n+'个'
+        if(n===12) opt.selected=true
+        lineRangeSelect.appendChild(opt)
+      })
+    }else{
+      [5,10].forEach(n=>{
+        const opt=document.createElement('option')
+        opt.value=n
+        opt.textContent=n+'个'
+        if(n===5) opt.selected=true
+        lineRangeSelect.appendChild(opt)
+      })
+    }
+    loadData()
+  }
+  lineRangeSelect.onchange=loadData
+  await loadData()
 }
 
 function setupAutoReload(){
