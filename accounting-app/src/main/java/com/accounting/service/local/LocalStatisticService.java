@@ -101,6 +101,89 @@ public class LocalStatisticService {
         return categoryData;
     }
     
+    public Map<String, Double> getIncomesByCategory(String userId, YearMonth yearMonth) {
+        Map<String, Double> categoryData = new HashMap<>();
+        
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+        
+        List<Transaction> transactions = transactionService.getTransactionsByUserId(userId);
+        
+        Map<String, List<Transaction>> grouped = transactions.stream()
+            .filter(t -> {
+                if (t.getDate() == null) return false;
+                LocalDate transactionDate = t.getDate().toLocalDate();
+                return !transactionDate.isBefore(startDate) && !transactionDate.isAfter(endDate);
+            })
+            .filter(t -> t.getType() == Transaction.TransactionType.INCOME)
+            .collect(Collectors.groupingBy(t -> 
+                t.getCategoryId() != null ? t.getCategoryId() : "未分类"
+            ));
+        
+        for (Map.Entry<String, List<Transaction>> entry : grouped.entrySet()) {
+            double total = entry.getValue().stream()
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+            categoryData.put(entry.getKey(), total);
+        }
+        
+        return categoryData;
+    }
+    
+    public Map<Integer, Double> getYearlyExpenses(String userId, int years) {
+        Map<Integer, Double> yearlyData = new HashMap<>();
+        int currentYear = LocalDate.now().getYear();
+        
+        List<Transaction> transactions = transactionService.getTransactionsByUserId(userId);
+        
+        for (int i = 0; i < years; i++) {
+            int year = currentYear - i;
+            LocalDate startDate = LocalDate.of(year, 1, 1);
+            LocalDate endDate = LocalDate.of(year, 12, 31);
+            
+            double total = transactions.stream()
+                .filter(t -> {
+                    if (t.getDate() == null) return false;
+                    LocalDate transactionDate = t.getDate().toLocalDate();
+                    return !transactionDate.isBefore(startDate) && !transactionDate.isAfter(endDate);
+                })
+                .filter(t -> t.getType() == Transaction.TransactionType.EXPENSE)
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+            
+            yearlyData.put(year, total);
+        }
+        
+        return yearlyData;
+    }
+    
+    public Map<Integer, Double> getYearlyIncome(String userId, int years) {
+        Map<Integer, Double> yearlyData = new HashMap<>();
+        int currentYear = LocalDate.now().getYear();
+        
+        List<Transaction> transactions = transactionService.getTransactionsByUserId(userId);
+        
+        for (int i = 0; i < years; i++) {
+            int year = currentYear - i;
+            LocalDate startDate = LocalDate.of(year, 1, 1);
+            LocalDate endDate = LocalDate.of(year, 12, 31);
+            
+            double total = transactions.stream()
+                .filter(t -> {
+                    if (t.getDate() == null) return false;
+                    LocalDate transactionDate = t.getDate().toLocalDate();
+                    return !transactionDate.isBefore(startDate) && !transactionDate.isAfter(endDate);
+                })
+                .filter(t -> t.getType() == Transaction.TransactionType.INCOME)
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+            
+            yearlyData.put(year, total);
+        }
+        
+        return yearlyData;
+    }
+    
     public double predictNextMonthExpense(String userId, int months) {
         Map<YearMonth, Double> monthlyData = getMonthlyExpenses(userId, months);
         

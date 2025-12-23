@@ -25,9 +25,11 @@ import com.accounting.service.local.LocalTransactionService;
 import com.accounting.chart.BarChartView;
 import com.accounting.chart.PieChartView;
 import com.accounting.chart.LineChartView;
+import com.accounting.chart.ComboBarChartView;
 import com.accounting.chart.ChartAnalyzer;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.time.LocalDateTime;
 import javafx.collections.FXCollections;
@@ -44,7 +46,7 @@ public class MainApplication extends Application {
 
     @Override
     public void start(Stage stage) {
-        stage.setTitle("记账软件");
+        stage.setTitle("iBudget");
         TabPane tabPane = new TabPane();
         StorageManager storage = new StorageManager();
         LocalTransactionService ts = new LocalTransactionService(storage);
@@ -212,27 +214,175 @@ public class MainApplication extends Application {
         HBox budgetForm = new HBox(yearField, monthField, budgetCatField, budgetAmountField, btnSetBudget);
         budgetForm.setSpacing(10);
         budgetBox.getChildren().addAll(new Label("预算设置"), budgetForm, budgetInfo);
-        Map<String, Double> catData = analyzer.categoryExpense(username.getText().isEmpty() ? "demo" : username.getText(), YearMonth.now());
-        List<Double> series = analyzer.monthlyExpensesSeries(username.getText().isEmpty() ? "demo" : username.getText(), 6);
+        // 图表页面
+        Map<String, Double> catExpenseData = analyzer.categoryExpense(username.getText().isEmpty() ? "demo" : username.getText(), YearMonth.now());
+        Map<String, Double> catIncomeData = analyzer.categoryIncome(username.getText().isEmpty() ? "demo" : username.getText(), YearMonth.now());
+        List<Double> expenseSeries = analyzer.monthlyExpensesSeries(username.getText().isEmpty() ? "demo" : username.getText(), 12);
+        List<Double> incomeSeries = analyzer.monthlyIncomeSeries(username.getText().isEmpty() ? "demo" : username.getText(), 12);
+        List<Double> netSeries = analyzer.monthlyNetSeries(username.getText().isEmpty() ? "demo" : username.getText(), 12);
+        
         VBox chartBox = new VBox();
-        chartBox.setSpacing(10);
+        chartBox.setSpacing(15);
         chartBox.setStyle("-fx-padding: 16px;");
-        chartBox.getChildren().addAll(
-                new Label("分类支出饼图"),
-                new PieChartView(catData).getView(),
-                new Label("分类支出柱状图"),
-                new BarChartView(catData).getView(),
-                new Label("月度支出折线图"),
-                new LineChartView(series).getView()
-        );
+        
+        // 饼图卡片
+        VBox pieCard = new VBox();
+        pieCard.setSpacing(10);
+        pieCard.setStyle("-fx-padding: 12px; -fx-background-color: -fx-background; -fx-border-color: -fx-border; -fx-border-radius: 8px; -fx-background-radius: 8px;");
+        Label pieTitle = new Label("📊 饼状图");
+        pieTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+        HBox pieCharts = new HBox();
+        pieCharts.setSpacing(20);
+        VBox expensePieBox = new VBox();
+        expensePieBox.setSpacing(5);
+        Label expensePieLabel = new Label("支出分类");
+        expensePieLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+        expensePieBox.getChildren().addAll(expensePieLabel, new PieChartView(catExpenseData).getView());
+        VBox incomePieBox = new VBox();
+        incomePieBox.setSpacing(5);
+        Label incomePieLabel = new Label("收入分类");
+        incomePieLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+        incomePieBox.getChildren().addAll(incomePieLabel, new PieChartView(catIncomeData).getView());
+        pieCharts.getChildren().addAll(expensePieBox, incomePieBox);
+        pieCard.getChildren().addAll(pieTitle, pieCharts);
+        
+        // 折线图卡片
+        VBox lineCard = new VBox();
+        lineCard.setSpacing(10);
+        lineCard.setStyle("-fx-padding: 12px; -fx-background-color: -fx-background; -fx-border-color: -fx-border; -fx-border-radius: 8px; -fx-background-radius: 8px;");
+        HBox lineHeader = new HBox();
+        lineHeader.setSpacing(10);
+        Label lineTitle = new Label("📈 折线图");
+        lineTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+        ComboBox<String> linePeriodBox = new ComboBox<>();
+        linePeriodBox.getItems().addAll("月度统计", "年度统计");
+        linePeriodBox.setValue("月度统计");
+        ComboBox<Integer> lineRangeBox = new ComboBox<>();
+        lineRangeBox.getItems().addAll(6, 12, 24);
+        lineRangeBox.setValue(12);
+        lineHeader.getChildren().addAll(lineTitle, linePeriodBox, lineRangeBox);
+        HBox lineCharts = new HBox();
+        lineCharts.setSpacing(20);
+        VBox expenseLineBox = new VBox();
+        expenseLineBox.setSpacing(5);
+        Label expenseLineLabel = new Label("支出趋势");
+        expenseLineLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+        expenseLineBox.getChildren().addAll(expenseLineLabel, new LineChartView(expenseSeries).getView());
+        VBox incomeLineBox = new VBox();
+        incomeLineBox.setSpacing(5);
+        Label incomeLineLabel = new Label("收入趋势");
+        incomeLineLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+        incomeLineBox.getChildren().addAll(incomeLineLabel, new LineChartView(incomeSeries).getView());
+        VBox netLineBox = new VBox();
+        netLineBox.setSpacing(5);
+        Label netLineLabel = new Label("净收入趋势");
+        netLineLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+        netLineBox.getChildren().addAll(netLineLabel, new LineChartView(netSeries).getView());
+        lineCharts.getChildren().addAll(expenseLineBox, incomeLineBox, netLineBox);
+        lineCard.getChildren().addAll(lineHeader, lineCharts);
+        
+        // 柱状图卡片
+        VBox barCard = new VBox();
+        barCard.setSpacing(10);
+        barCard.setStyle("-fx-padding: 12px; -fx-background-color: -fx-background; -fx-border-color: -fx-border; -fx-border-radius: 8px; -fx-background-radius: 8px;");
+        HBox barHeader = new HBox();
+        barHeader.setSpacing(10);
+        Label barTitle = new Label("📊 月度收支对比柱状图");
+        barTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+        ComboBox<Integer> barYearBox = new ComboBox<>();
+        int currentYear = java.time.Year.now().getValue();
+        for (int y = currentYear; y >= currentYear - 5; y--) {
+            barYearBox.getItems().add(y);
+        }
+        barYearBox.setValue(currentYear);
+        ComboBox<Integer> barMonthsBox = new ComboBox<>();
+        barMonthsBox.getItems().addAll(6, 12, 24);
+        barMonthsBox.setValue(12);
+        barHeader.getChildren().addAll(barTitle, barYearBox, barMonthsBox);
+        List<String> monthLabels = new ArrayList<>();
+        for (int i = 1; i <= 12; i++) {
+            monthLabels.add(i + "月");
+        }
+        ComboBarChartView comboBar = new ComboBarChartView(incomeSeries, expenseSeries, monthLabels);
+        barCard.getChildren().addAll(barHeader, comboBar.getView());
+        
+        // 刷新按钮
         Button btnRefreshCharts = new Button("刷新图表");
         btnRefreshCharts.getStyleClass().add("button");
         btnRefreshCharts.setOnAction(e -> {
-            Map<String, Double> d = analyzer.categoryExpense(username.getText().isEmpty() ? "demo" : username.getText(), YearMonth.now());
-            List<Double> s = analyzer.monthlyExpensesSeries(username.getText().isEmpty() ? "demo" : username.getText(), 6);
-            chartBox.getChildren().setAll(new Label("分类支出饼图"), new PieChartView(d).getView(), new Label("分类支出柱状图"), new BarChartView(d).getView(), new Label("月度支出折线图"), new LineChartView(s).getView(), btnRefreshCharts);
+            String userId = username.getText().isEmpty() ? "demo" : username.getText();
+            String period = linePeriodBox.getValue();
+            int range = lineRangeBox.getValue();
+            int barMonths = barMonthsBox.getValue();
+            
+            Map<String, Double> expCat = analyzer.categoryExpense(userId, YearMonth.now());
+            Map<String, Double> incCat = analyzer.categoryIncome(userId, YearMonth.now());
+            
+            List<Double> expLine, incLine, netLine;
+            if ("年度统计".equals(period)) {
+                expLine = analyzer.yearlyExpensesSeries(userId, range);
+                incLine = analyzer.yearlyIncomeSeries(userId, range);
+                netLine = analyzer.yearlyNetSeries(userId, range);
+            } else {
+                expLine = analyzer.monthlyExpensesSeries(userId, range);
+                incLine = analyzer.monthlyIncomeSeries(userId, range);
+                netLine = analyzer.monthlyNetSeries(userId, range);
+            }
+            
+            List<Double> barExp = analyzer.monthlyExpensesSeries(userId, barMonths);
+            List<Double> barInc = analyzer.monthlyIncomeSeries(userId, barMonths);
+            
+            // 重新创建图表
+            pieCharts.getChildren().clear();
+            VBox newExpensePieBox = new VBox();
+            newExpensePieBox.setSpacing(5);
+            Label newExpensePieLabel = new Label("支出分类");
+            newExpensePieLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+            newExpensePieBox.getChildren().addAll(newExpensePieLabel, new PieChartView(expCat).getView());
+            VBox newIncomePieBox = new VBox();
+            newIncomePieBox.setSpacing(5);
+            Label newIncomePieLabel = new Label("收入分类");
+            newIncomePieLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+            newIncomePieBox.getChildren().addAll(newIncomePieLabel, new PieChartView(incCat).getView());
+            pieCharts.getChildren().addAll(newExpensePieBox, newIncomePieBox);
+            
+            lineCharts.getChildren().clear();
+            VBox newExpenseLineBox = new VBox();
+            newExpenseLineBox.setSpacing(5);
+            Label newExpenseLineLabel = new Label("支出趋势");
+            newExpenseLineLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+            newExpenseLineBox.getChildren().addAll(newExpenseLineLabel, new LineChartView(expLine).getView());
+            VBox newIncomeLineBox = new VBox();
+            newIncomeLineBox.setSpacing(5);
+            Label newIncomeLineLabel = new Label("收入趋势");
+            newIncomeLineLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+            newIncomeLineBox.getChildren().addAll(newIncomeLineLabel, new LineChartView(incLine).getView());
+            VBox newNetLineBox = new VBox();
+            newNetLineBox.setSpacing(5);
+            Label newNetLineLabel = new Label("净收入趋势");
+            newNetLineLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+            newNetLineBox.getChildren().addAll(newNetLineLabel, new LineChartView(netLine).getView());
+            lineCharts.getChildren().addAll(newExpenseLineBox, newIncomeLineBox, newNetLineBox);
+            
+            List<String> newLabels = new ArrayList<>();
+            for (int i = 1; i <= barMonths; i++) {
+                newLabels.add(i + "月");
+            }
+            barCard.getChildren().set(1, new ComboBarChartView(barInc, barExp, newLabels).getView());
         });
-        chartBox.getChildren().add(btnRefreshCharts);
+        
+        // 月度/年度切换事件
+        linePeriodBox.setOnAction(e -> {
+            if ("月度统计".equals(linePeriodBox.getValue())) {
+                lineRangeBox.getItems().setAll(6, 12, 24);
+                lineRangeBox.setValue(12);
+            } else {
+                lineRangeBox.getItems().setAll(5, 10);
+                lineRangeBox.setValue(5);
+            }
+        });
+        
+        chartBox.getChildren().addAll(pieCard, lineCard, barCard, btnRefreshCharts);
         Tab authTab = new Tab("账号", authBox);
         Tab transactionsTab = new Tab("交易", txBox);
         Tab budgetTab = new Tab("预算", budgetBox);
@@ -242,7 +392,7 @@ public class MainApplication extends Application {
         budgetTab.setClosable(false);
         chartsTab.setClosable(false);
         tabPane.getTabs().addAll(authTab, transactionsTab, budgetTab, chartsTab);
-        Scene scene = new Scene(tabPane, 1000, 700);
+        Scene scene = new Scene(tabPane, 1200, 800);
         String lightCss = MainApplication.class.getResource("/ui.css").toExternalForm();
         String darkCss = MainApplication.class.getResource("/ui-dark.css").toExternalForm();
         scene.getStylesheets().setAll(lightCss);
