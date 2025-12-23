@@ -44,19 +44,31 @@ public class LocalAIAnalysisService {
     private String cleanResponse(String response) {
         if (response == null) return response;
         
-        // 移除常见的元信息模式
-        response = response.replaceAll("(?i)\\(.*?总字数.*?\\)", "");
-        response = response.replaceAll("(?i)\\(.*?字数.*?\\)", "");
-        response = response.replaceAll("(?i)\\(.*?简洁.*?\\)", "");
-        response = response.replaceAll("(?i)\\(.*?友好.*?\\)", "");
-        response = response.replaceAll("(?i)\\(.*?覆盖.*?要求.*?\\)", "");
-        response = response.replaceAll("(?i)\\(.*?符合.*?要求.*?\\)", "");
+        // 移除英文括号内的元信息模式
+        response = response.replaceAll("(?i)\\([^)]*?字数[^)]*?\\)", "");
+        response = response.replaceAll("(?i)\\([^)]*?简洁[^)]*?\\)", "");
+        response = response.replaceAll("(?i)\\([^)]*?友好[^)]*?\\)", "");
+        response = response.replaceAll("(?i)\\([^)]*?覆盖[^)]*?\\)", "");
+        response = response.replaceAll("(?i)\\([^)]*?要点[^)]*?\\)", "");
+        response = response.replaceAll("(?i)\\([^)]*?符合[^)]*?\\)", "");
+        response = response.replaceAll("(?i)\\([^)]*?要求[^)]*?\\)", "");
         
-        // 移除括号内的纯数字+单位组合(如 (180字))
-        response = response.replaceAll("\\(\\d+字\\)", "");
+        // 移除中文括号内的元信息模式
+        response = response.replaceAll("(?i)（[^）]*?字数[^）]*?）", "");
+        response = response.replaceAll("(?i)（[^）]*?简洁[^）]*?）", "");
+        response = response.replaceAll("(?i)（[^）]*?友好[^）]*?）", "");
+        response = response.replaceAll("(?i)（[^）]*?覆盖[^）]*?）", "");
+        response = response.replaceAll("(?i)（[^）]*?要点[^）]*?）", "");
+        response = response.replaceAll("(?i)（[^）]*?符合[^）]*?）", "");
         
-        // 移除多余的空行
-        response = response.replaceAll("\\n{3,}", "\n\n");
+        // 移除末尾的说明性句子(不在括号内)
+        response = response.replaceAll("[，,]\\s*简洁[^。！？\\n]*", "");
+        response = response.replaceAll("[，,]\\s*覆盖[^。！？\\n]*", "");
+        response = response.replaceAll("[，,]\\s*包含[^。！？\\n]*", "");
+        
+        // 移除多余的空行和空格
+        response = response.replaceAll("\\n{3,}", "\\n\\n");
+        response = response.replaceAll("  +", " ");
         
         return response.trim();
     }
@@ -106,7 +118,7 @@ public class LocalAIAnalysisService {
         prompt.append("2. 超支风险预警 - 如果有超支风险或已超支,请明确指出\n");
         prompt.append("3. 消费建议 - 提供3-5条具体可行的节省建议\n");
         prompt.append("4. 预算调整建议 - 根据实际情况建议如何调整预算\n");
-        prompt.append("\n重要提示: 请直接输出分析内容,不要包含任何关于字数、格式说明等元信息(如'总字数约180'、'简洁友好'、'覆盖所有要求'等)。请用简洁、友好的语气回复,每个部分用emoji标注,总字数控制在300字以内。");
+        prompt.append("\n重要要求: 禁止在回复中包含任何元信息、说明性文字或格式提示，如'字数约150'、'简洁覆盖所有要点'、'总字数约180'、'简洁友好'、'覆盖所有要求'等。请直接输出纯净的分析内容，用简洁、友好的语气，总字数控制在300字以内。");
         
         return prompt.toString();
     }
