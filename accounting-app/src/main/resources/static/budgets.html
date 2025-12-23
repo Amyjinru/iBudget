@@ -1,3 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>预算 · iBudget</title>
+    <style>
+        :root{--bg:#f7f8f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--accent:#0a84ff;--warn:#d33}
+        [data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#f8fafc;--muted:#94a3b8;--line:#334155;--accent:#38bdf8;--warn:#ef4444}
+        *{box-sizing:border-box}
+        body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,system-ui}
+        .container{max-width:1080px;margin:0 auto;padding:24px}
+        .header{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
+        .nav a{color:var(--muted);text-decoration:none;margin-left:12px}
+        .surface{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04);color:var(--text);}
+        .section-title{display:flex;align-items:center;gap:8px;margin:0 0 12px 0;font-size:16px;font-weight:600;color:var(--text);}
+        .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+        label{font-size:12px;color:var(--muted);font-weight:600}
+        input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--text);outline:none}
+        [data-theme="dark"] input,[data-theme="dark"] select{background:var(--bg)}
+        input:focus,select:focus{border-color:var(--accent)}
+        .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+        [data-theme="dark"] .btn{background:var(--card)}
+        .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+        .table{width:100%;border-collapse:separate;border-spacing:0 8px}
+        .table th{font-weight:600;color:var(--muted);text-align:left;padding:8px 10px}
+        .table td{background:var(--card);border:1px solid var(--line);border-left:none;border-right:none;padding:12px 10px}
+        .table tr td:first-child{border-left:1px solid var(--line);border-radius:10px 0 0 10px}
+        .table tr td:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}
+        .usage{display:flex;align-items:center;gap:10px;height:20px}
+        .bar-bg{flex:1;background:var(--bg);border-radius:999px;height:8px;overflow:hidden;border:1px solid var(--line)}
+        .bar{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),#71b6ff)}
+        .alert{color:var(--warn);font-size:13px;font-weight:bold}
+        @media (max-width:768px){.grid-2{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div style="font-weight:800;font-size:1.2rem">iBudget</div>
+        <div class="nav">
+            <a href="/transactions.html">账目</a>
+            <a href="/budgets.html">预算</a>
+            <a href="/trends.html">趋势</a>
+            <a href="/charts.html">图表</a>
+            <a href="/login.html">切换账号</a>
+            <a href="#" id="themeToggle" style="color:var(--accent);font-weight:800">切换主题</a>
+        </div>
+    </div>
+
+    <div class="surface" style="margin-bottom:16px">
+        <div class="section-title">预算设置</div>
+        
+        <!-- 预算类型切换 -->
+        <div style="margin-bottom:16px;display:flex;gap:20px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="radio" name="budgetType" value="monthly" checked> 月度预算
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="radio" name="budgetType" value="period"> 周期型预算
+            </label>
+        </div>
+
+        <!-- 月度预算表单 -->
+        <div id="monthlyForm">
+            <div class="grid-2">
+                <div><label>年份</label><input id="bdYear" type="number"></div>
+                <div><label>月份</label><input id="bdMonth" type="number" min="1" max="12"></div>
+                <div><label>分类(留空表示总预算)</label><input id="bdCategory"></div>
+                <div><label>预算金额</label><input id="bdAmount" type="number" step="0.01"></div>
+            </div>
+            <div style="margin-top:12px">
+                <button class="btn btn-primary" id="btnSetBudget">设置预算</button>
+            </div>
+        </div>
+
+        <!-- 周期型预算表单 -->
+        <div id="periodForm" style="display:none">
+            <div class="grid-2">
+                <div><label>开始日期</label><input id="pdStartDate" type="date"></div>
+                <div><label>分类(留空表示总预算)</label><input id="pdCategory"></div>
+                <div>
+                    <label>周期单位</label>
+                    <select id="pdUnit">
+                        <option value="DAYS">天</option>
+                        <option value="WEEKS">周</option>
+                        <option value="MONTHS" selected>月</option>
+                        <option value="YEARS">年</option>
+                    </select>
+                </div>
+                <div><label>周期数量</label><input id="pdCount" type="number" min="1" value="1"></div>
+                <div><label>预算金额</label><input id="pdAmount" type="number" step="0.01"></div>
+            </div>
+            <div style="margin-top:12px">
+                <button class="btn btn-primary" id="btnSetPeriodBudget">创建周期型预算</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="surface" style="margin-bottom:16px">
+        <div class="section-title">预算列表与智能分析</div>
+        <table class="table">
+            <thead><tr><th>分类</th><th>金额</th><th>周期</th><th>使用率</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="bdTbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const savedTheme=localStorage.getItem('theme')||'light'
+    document.documentElement.dataset.theme=savedTheme
+    document.getElementById('themeToggle').onclick=(e)=>{e.preventDefault();const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('theme',t)}
+    const base='/api'; const token=localStorage.getItem('jwt'); if(!token){location.href='/login.html'}
+    
+    // 月度预算元素
+    const bdYear=document.getElementById('bdYear')
+    const bdMonth=document.getElementById('bdMonth')
+    const bdCategory=document.getElementById('bdCategory')
+    const bdAmount=document.getElementById('bdAmount')
+    
+    // 周期型预算元素
+    const pdStartDate=document.getElementById('pdStartDate')
+    const pdCategory=document.getElementById('pdCategory')
+    const pdUnit=document.getElementById('pdUnit')
+    const pdCount=document.getElementById('pdCount')
+    const pdAmount=document.getElementById('pdAmount')
+    
+    const bdTbody=document.getElementById('bdTbody')
+    const monthlyForm=document.getElementById('monthlyForm')
+    const periodForm=document.getElementById('periodForm')
+
+    // 预算类型切换
+    document.querySelectorAll('input[name="budgetType"]').forEach(radio=>{
+        radio.onchange=()=>{
+            if(radio.value==='monthly'){
+                monthlyForm.style.display='block'
+                periodForm.style.display='none'
+            }else{
+                monthlyForm.style.display='none'
+                periodForm.style.display='block'
+            }
+        }
+    })
+
+    async function fetchJSON(url,opts){
+        const r=await fetch(url,{...opts,headers:{...(opts&&opts.headers||{}),'Content-Type':'application/json','Authorization':'Bearer '+token}})
+        if(!r.ok) throw new Error('http '+r.status); return r.status===204?null:await r.json()
+    }
+
+    function nowYM(){const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()+1}}
+    const nym=nowYM(); bdYear.value=nym.year; bdMonth.value=nym.month
+    
+    // 设置周期型预算默认日期为今天
+    const today=new Date().toISOString().split('T')[0]
+    pdStartDate.value=today
+
+    // 月度预算设置
+    document.getElementById('btnSetBudget').onclick=async()=>{
+        const payload={year:parseInt(bdYear.value),month:parseInt(bdMonth.value),categoryId:(bdCategory.value||null),amount:parseFloat(bdAmount.value||'0')}
+        await fetchJSON(base+'/budgets',{method:'POST',body:JSON.stringify(payload)})
+        loadBudgets()
+    }
+    
+    // 周期型预算创建
+    document.getElementById('btnSetPeriodBudget').onclick=async()=>{
+        const userId=JSON.parse(atob(token.split('.')[1])).sub
+        const startDate=pdStartDate.value
+        if(!startDate){alert('请选择开始日期');return}
+        
+        const payload={
+            userId,
+            categoryId:pdCategory.value||null,
+            amount:parseFloat(pdAmount.value||'0'),
+            startDate,
+            periodUnit:pdUnit.value,
+            periodCount:parseInt(pdCount.value||'1'),
+            year:parseInt(startDate.split('-')[0]),
+            month:parseInt(startDate.split('-')[1])
+        }
+        await fetchJSON(base+'/budgets',{method:'POST',body:JSON.stringify(payload)})
+        loadBudgets()
+    }
+
     async function usageInfo(userBudget){
         const q=new URLSearchParams({year:userBudget.year,month:userBudget.month}); if(userBudget.categoryId) q.set('categoryId',userBudget.categoryId)
         return await fetchJSON(base+'/budgets/usage?'+q.toString())
@@ -133,3 +316,6 @@
     }
     
     loadBudgets()
+</script>
+</body>
+</html>
