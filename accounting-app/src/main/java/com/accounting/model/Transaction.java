@@ -1,6 +1,11 @@
 package com.accounting.model;
 
 import com.google.gson.annotations.SerializedName;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -8,13 +13,17 @@ import java.util.UUID;
  * 账目实体类
  * 支持支出/收入两种类型
  */
+@Entity
+@Table(name = "transactions")
 public class Transaction {
+    @Id
     @SerializedName("id")
     private String id;
     
     @SerializedName("userId")
     private String userId;
     
+    @Enumerated(EnumType.STRING)
     @SerializedName("type")
     private TransactionType type; // 支出或收入
     

@@ -9,6 +9,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.VBox;
@@ -18,6 +19,9 @@ import com.accounting.storage.StorageManager;
 import com.accounting.service.TransactionService;
 import com.accounting.service.BudgetService;
 import com.accounting.service.StatisticService;
+import com.accounting.service.local.LocalBudgetService;
+import com.accounting.service.local.LocalStatisticService;
+import com.accounting.service.local.LocalTransactionService;
 import com.accounting.chart.BarChartView;
 import com.accounting.chart.PieChartView;
 import com.accounting.chart.LineChartView;
@@ -43,12 +47,14 @@ public class MainApplication extends Application {
         stage.setTitle("记账软件");
         TabPane tabPane = new TabPane();
         StorageManager storage = new StorageManager();
-        TransactionService ts = new TransactionService(storage);
-        BudgetService bs = new BudgetService(storage, ts);
-        StatisticService ss = new StatisticService(ts);
+        LocalTransactionService ts = new LocalTransactionService(storage);
+        LocalBudgetService bs = new LocalBudgetService(storage, ts);
+        LocalStatisticService ss = new LocalStatisticService(ts);
         ChartAnalyzer analyzer = new ChartAnalyzer(ss);
         ApiClient api = new ApiClient("http://localhost:8080");
         VBox authBox = new VBox();
+        authBox.setSpacing(10);
+        authBox.setStyle("-fx-padding: 16px;");
         TextField username = new TextField();
         username.setPromptText("用户名");
         TextField email = new TextField();
@@ -57,7 +63,10 @@ public class MainApplication extends Application {
         password.setPromptText("密码");
         Label authStatus = new Label("未登录");
         Button btnRegister = new Button("注册");
+        btnRegister.getStyleClass().add("button");
         Button btnLogin = new Button("登录");
+        btnLogin.getStyleClass().add("button");
+        btnLogin.getStyleClass().add("primary");
         btnRegister.setOnAction(e -> {
             try {
                 api.register(username.getText(), email.getText(), password.getText());
@@ -74,8 +83,14 @@ public class MainApplication extends Application {
                 authStatus.setText("登录失败");
             }
         });
-        authBox.getChildren().addAll(new Label("账号登录/注册"), new HBox(username, email, password), new HBox(btnRegister, btnLogin), authStatus);
+        HBox authInputs = new HBox(username, email, password);
+        authInputs.setSpacing(10);
+        HBox authActions = new HBox(btnRegister, btnLogin);
+        authActions.setSpacing(10);
+        authBox.getChildren().addAll(new Label("账号登录/注册"), authInputs, authActions, authStatus);
         VBox txBox = new VBox();
+        txBox.setSpacing(10);
+        txBox.setStyle("-fx-padding: 16px;");
         TableView<Transaction> table = new TableView<>();
         ObservableList<Transaction> data = FXCollections.observableArrayList(ts.getAllTransactions());
         table.setItems(data);
@@ -97,6 +112,8 @@ public class MainApplication extends Application {
         TextField descField = new TextField();
         descField.setPromptText("描述");
         Button btnAdd = new Button("添加");
+        btnAdd.getStyleClass().add("button");
+        btnAdd.getStyleClass().add("primary");
         btnAdd.setOnAction(e -> {
             try {
                 Transaction t = new Transaction(username.getText(), typeBox.getValue(), Double.parseDouble(amountField.getText()), categoryField.getText(), descField.getText());
@@ -106,6 +123,7 @@ public class MainApplication extends Application {
             } catch (Exception ignored) {}
         });
         Button btnDelete = new Button("删除选中");
+        btnDelete.getStyleClass().add("button");
         btnDelete.setOnAction(e -> {
             Transaction sel = table.getSelectionModel().getSelectedItem();
             if (sel != null) {
@@ -114,6 +132,7 @@ public class MainApplication extends Application {
             }
         });
         Button btnExport = new Button("导出CSV");
+        btnExport.getStyleClass().add("button");
         btnExport.setOnAction(e -> {
             try {
                 FileChooser fc = new FileChooser();
@@ -124,6 +143,7 @@ public class MainApplication extends Application {
             } catch (Exception ignored) {}
         });
         Button btnImport = new Button("导入CSV");
+        btnImport.getStyleClass().add("button");
         btnImport.setOnAction(e -> {
             try {
                 FileChooser fc = new FileChooser();
@@ -137,6 +157,7 @@ public class MainApplication extends Application {
             } catch (Exception ignored) {}
         });
         Button btnPull = new Button("拉取远端");
+        btnPull.getStyleClass().add("button");
         btnPull.setOnAction(e -> {
             try {
                 if (api.isLoggedIn()) {
@@ -148,6 +169,7 @@ public class MainApplication extends Application {
             } catch (Exception ignored) {}
         });
         Button btnPush = new Button("上传本地");
+        btnPush.getStyleClass().add("button");
         btnPush.setOnAction(e -> {
             try {
                 if (api.isLoggedIn()) {
@@ -155,8 +177,14 @@ public class MainApplication extends Application {
                 }
             } catch (Exception ignored) {}
         });
-        txBox.getChildren().addAll(new Label("交易管理"), table, new HBox(typeBox, amountField, categoryField, descField, btnAdd, btnDelete), new HBox(btnExport, btnImport, btnPull, btnPush));
+        HBox txForm = new HBox(typeBox, amountField, categoryField, descField, btnAdd, btnDelete);
+        txForm.setSpacing(10);
+        HBox txActions = new HBox(btnExport, btnImport, btnPull, btnPush);
+        txActions.setSpacing(10);
+        txBox.getChildren().addAll(new Label("交易管理"), table, txForm, txActions);
         VBox budgetBox = new VBox();
+        budgetBox.setSpacing(10);
+        budgetBox.setStyle("-fx-padding: 16px;");
         TextField yearField = new TextField();
         yearField.setPromptText("年份");
         TextField monthField = new TextField();
@@ -167,6 +195,8 @@ public class MainApplication extends Application {
         budgetAmountField.setPromptText("预算金额");
         Label budgetInfo = new Label();
         Button btnSetBudget = new Button("设置预算");
+        btnSetBudget.getStyleClass().add("button");
+        btnSetBudget.getStyleClass().add("primary");
         btnSetBudget.setOnAction(e -> {
             try {
                 int y = Integer.parseInt(yearField.getText());
@@ -179,10 +209,14 @@ public class MainApplication extends Application {
                 budgetInfo.setText("已用: " + used + (over ? " 超额" : ""));
             } catch (Exception ignored) {}
         });
-        budgetBox.getChildren().addAll(new Label("预算设置"), new HBox(yearField, monthField, budgetCatField, budgetAmountField, btnSetBudget), budgetInfo);
+        HBox budgetForm = new HBox(yearField, monthField, budgetCatField, budgetAmountField, btnSetBudget);
+        budgetForm.setSpacing(10);
+        budgetBox.getChildren().addAll(new Label("预算设置"), budgetForm, budgetInfo);
         Map<String, Double> catData = analyzer.categoryExpense(username.getText().isEmpty() ? "demo" : username.getText(), YearMonth.now());
         List<Double> series = analyzer.monthlyExpensesSeries(username.getText().isEmpty() ? "demo" : username.getText(), 6);
         VBox chartBox = new VBox();
+        chartBox.setSpacing(10);
+        chartBox.setStyle("-fx-padding: 16px;");
         chartBox.getChildren().addAll(
                 new Label("分类支出饼图"),
                 new PieChartView(catData).getView(),
@@ -192,6 +226,7 @@ public class MainApplication extends Application {
                 new LineChartView(series).getView()
         );
         Button btnRefreshCharts = new Button("刷新图表");
+        btnRefreshCharts.getStyleClass().add("button");
         btnRefreshCharts.setOnAction(e -> {
             Map<String, Double> d = analyzer.categoryExpense(username.getText().isEmpty() ? "demo" : username.getText(), YearMonth.now());
             List<Double> s = analyzer.monthlyExpensesSeries(username.getText().isEmpty() ? "demo" : username.getText(), 6);
@@ -208,6 +243,18 @@ public class MainApplication extends Application {
         chartsTab.setClosable(false);
         tabPane.getTabs().addAll(authTab, transactionsTab, budgetTab, chartsTab);
         Scene scene = new Scene(tabPane, 1000, 700);
+        String lightCss = MainApplication.class.getResource("/ui.css").toExternalForm();
+        String darkCss = MainApplication.class.getResource("/ui-dark.css").toExternalForm();
+        scene.getStylesheets().setAll(lightCss);
+        CheckBox darkToggle = new CheckBox("暗色主题");
+        darkToggle.setOnAction(e -> {
+            if (darkToggle.isSelected()) {
+                scene.getStylesheets().setAll(darkCss);
+            } else {
+                scene.getStylesheets().setAll(lightCss);
+            }
+        });
+        authBox.getChildren().add(0, darkToggle);
         stage.setScene(scene);
         stage.show();
     }

@@ -9,12 +9,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * 统计服务类
  * 提供消费趋势预测和数据分析功能
  */
+@Service
+@Transactional(readOnly = true)
 public class StatisticService {
-    private TransactionService transactionService;
+    private final TransactionService transactionService;
     
     public StatisticService(TransactionService transactionService) {
         this.transactionService = transactionService;

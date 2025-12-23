@@ -1,0 +1,30 @@
+.root {
+    -fx-font-family: -apple-system, "Segoe UI", Helvetica, Arial, system-ui;
+    -fx-background-color: #0b0e11;
+}
+.label { -fx-text-fill: #e5e7eb; }
+.text-field, .combo-box {
+    -fx-background-color: #12151a;
+    -fx-border-color: #2a2f37;
+    -fx-text-fill: #e5e7eb;
+}
+.text-field:focused, .combo-box:focused { -fx-border-color: #0a84ff; }
+.button {
+    -fx-background-color: #12151a;
+    -fx-border-color: #2a2f37;
+    -fx-text-fill: #e5e7eb;
+}
+.button.primary {
+    -fx-background-color: #0a84ff;
+    -fx-border-color: #0a84ff;
+    -fx-text-fill: white;
+}
+.table-view {
+    -fx-background-color: transparent;
+    -fx-table-cell-border-color: #2a2f37;
+}
+.table-view .column-header-background {
+    -fx-background-color: #12151a;
+    -fx-border-color: #2a2f37;
+}
+.table-row-cell:filled:selected, .table-row-cell:filled:hover { -fx-background-color: #0f172a; }

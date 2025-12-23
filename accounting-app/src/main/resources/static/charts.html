@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>图表 · iBudget</title>
+<style>
+:root{--bg:#f7f8f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--accent:#0a84ff}
+[data-theme="dark"]{--bg:#0b0e11;--card:#12151a;--text:#e5e7eb;--muted:#94a3b8;--line:#2a2f37;--accent:#0a84ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,system-ui}
+.container{max-width:1080px;margin:0 auto;padding:24px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
+.nav a{color:var(--muted);text-decoration:none;margin-left:12px}
+.surface{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.section-title{display:flex;align-items:center;gap:8px;margin:0 0 12px 0;font-size:16px;font-weight:600}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.chart{height:240px;border:1px dashed var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center}
+.bar{width:20px;background:#0a84ff22;border:1px solid #0a84ff55}
+@media (max-width:768px){.grid-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>iBudget</div>
+    <div class="nav">
+      <a href="/transactions.html">账目</a>
+      <a href="/budgets.html">预算</a>
+      <a href="/trends.html">趋势</a>
+      <a href="/charts.html">图表</a>
+      <a href="/login.html">切换账号</a>
+      <a href="#" id="themeToggle">暗色</a>
+    </div>
+  </div>
+
+  <div class="surface">
+    <div class="section-title">饼状图 / 折线图 / 柱状图</div>
+    <div class="grid-3">
+      <div>
+        <label style="color:var(--muted)">本月按分类支出（饼图）</label>
+        <div id="pieChart" class="chart"></div>
+      </div>
+      <div>
+        <label style="color:var(--muted)">最近月份支出（折线图）</label>
+        <div id="lineChart" class="chart"></div>
+      </div>
+      <div>
+        <label style="color:var(--muted)">最近月份支出（柱状图）</label>
+        <div id="barChart" class="chart" style="align-items:flex-end;gap:6px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const savedTheme=localStorage.getItem('theme')||'light'
+document.documentElement.dataset.theme=savedTheme
+document.getElementById('themeToggle').onclick=(e)=>{e.preventDefault();const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('theme',t)}
+const base='/api'
+const token=localStorage.getItem('jwt'); if(!token){location.href='/login.html'}
+async function fetchJSON(url,opts){
+  const r=await fetch(url,{...opts,headers:{...(opts&&opts.headers||{}),'Content-Type':'application/json','Authorization':'Bearer '+token}})
+  if(!r.ok) throw new Error('http '+r.status)
+  return r.status===204?null:await r.json()
+}
+
+function renderLine(values){
+  const cont=document.getElementById('lineChart'); cont.innerHTML=''
+  const w=cont.clientWidth||320, h=240; const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('width',w); svg.setAttribute('height',h)
+  const max=Math.max(...values,1); const step=w/(values.length-1)
+  let d=''; values.forEach((v,i)=>{const x=Math.round(i*step); const y=Math.round(h-10-(h-20)*(v/max)); d+= (i===0?`M${x},${y}`:` L${x},${y}`)})
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d',d); path.setAttribute('stroke','#0a84ff'); path.setAttribute('fill','none'); path.setAttribute('stroke-width','2')
+  svg.appendChild(path); cont.appendChild(svg)
+}
+
+function renderBars(values){
+  const cont=document.getElementById('barChart'); cont.innerHTML=''
+  const max=Math.max(...values,1)
+  values.forEach(v=>{const h=Math.round(200*(v/max)); const d=document.createElement('div'); d.className='bar'; d.style.height=h+'px'; cont.appendChild(d)})
+}
+
+function renderPie(map){
+  const cont=document.getElementById('pieChart'); cont.innerHTML=''
+  const w=240,h=240,r=100,cx=120,cy=120; const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'); svg.setAttribute('width',w); svg.setAttribute('height',h)
+  const values=Object.values(map); const labels=Object.keys(map); const sum=values.reduce((a,b)=>a+b,0)||1
+  let start=0; const colors=['#0a84ff','#4f46e5','#10b981','#f59e0b','#ef4444','#14b8a6','#8b5cf6','#22c55e']
+  values.forEach((v,i)=>{
+    const part=v/sum; const end=start+part; const a1=start*2*Math.PI, a2=end*2*Math.PI
+    const x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1)
+    const x2=cx+r*Math.cos(a2), y2=cy+r*Math.sin(a2)
+    const large= (end-start)>0.5 ? 1 : 0
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path')
+    const d=`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`
+    path.setAttribute('d',d); path.setAttribute('fill',colors[i%colors.length]); path.setAttribute('opacity','0.8')
+    svg.appendChild(path)
+    start=end
+  })
+  cont.appendChild(svg)
+}
+
+async function load(){
+  const months=12
+  const m=await fetchJSON(base+'/stats/monthly?months='+months)
+  renderLine(m.expenses)
+  renderBars(m.expenses)
+  const d=new Date(); const ym=`year=${d.getFullYear()}&month=${d.getMonth()+1}`
+  const cat=await fetchJSON(base+'/stats/category?'+ym)
+  renderPie(cat)
+}
+
+function setupAutoReload(){
+  let last = Number(localStorage.getItem('ledgerLastUpdate')||'0')
+  function check(){
+    const t = Number(localStorage.getItem('ledgerLastUpdate')||'0')
+    if(t>last){ last=t; load() }
+  }
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden) check()})
+  setInterval(check,5000)
+}
+
+load(); setupAutoReload()
+</script>
+</body>
+</html>

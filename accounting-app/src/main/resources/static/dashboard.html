@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iBudget · 仪表盘</title>
+<style>
+:root{--bg:#f7f8f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--accent:#0a84ff}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,system-ui;}
+.container{max-width:1080px;margin:0 auto;padding:24px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo{width:26px;height:26px}
+.brand .name{font-weight:600}
+.actions a{color:var(--muted);text-decoration:none;margin-left:12px}
+.surface{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.section-title{display:flex;align-items:center;gap:8px;margin:0 0 12px 0;font-size:16px;font-weight:600}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{font-size:12px;color:var(--muted)}
+input,select,textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.stack{display:flex;gap:10px;flex-wrap:wrap}
+.table{width:100%;border-collapse:separate;border-spacing:0 8px}
+.table th{font-weight:600;color:var(--muted);text-align:left;padding:8px 10px}
+.table td{background:#fff;border:1px solid var(--line);border-left:none;border-right:none;padding:12px 10px}
+.table tr td:first-child{border-left:1px solid var(--line);border-radius:10px 0 0 10px}
+.table tr td:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}
+.chart{height:180px;display:flex;align-items:flex-end;gap:6px}
+.bar{width:20px;background:#0a84ff22;border:1px solid #0a84ff55}
+.bar:hover{background:#0a84ff33}
+@media (max-width:768px){.grid-3{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#fff" stroke="#0a84ff"/><path d="M7 13l3 3 7-7" stroke="#0a84ff" stroke-width="2" fill="none"/></svg>
+      <div class="name">iBudget</div>
+    </div>
+    <div class="actions">
+      <a href="/login.html">切换账号</a>
+    </div>
+  </div>
+
+  <div class="surface" style="margin-bottom:16px">
+    <div class="section-title">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12" stroke="#0f172a"/></svg>
+      新增/编辑交易
+    </div>
+    <div class="grid-3">
+      <div><label>类型</label><select id="txType"><option value="EXPENSE">支出</option><option value="INCOME">收入</option></select></div>
+      <div><label>金额</label><input id="txAmount" type="number" step="0.01"></div>
+      <div><label>分类</label><input id="txCategory"></div>
+      <div style="grid-column:1/-1"><label>描述</label><input id="txDesc"></div>
+      <div style="grid-column:1/-1"><label>日期(ISO)</label><input id="txDate" placeholder="2025-01-01T12:00:00"></div>
+    </div>
+    <div class="stack" style="margin-top:12px">
+      <button class="btn btn-primary" id="btnSaveTx">保存</button>
+      <button class="btn" id="btnResetTx">重置</button>
+    </div>
+  </div>
+
+  <div class="surface" style="margin-bottom:16px">
+    <div class="section-title">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke="#0f172a"/></svg>
+      交易列表
+    </div>
+    <table class="table">
+      <thead><tr><th>类型</th><th>金额</th><th>分类</th><th>描述</th><th>日期</th><th>操作</th></tr></thead>
+      <tbody id="txTbody"></tbody>
+    </table>
+  </div>
+
+  <div class="surface" style="margin-bottom:16px">
+    <div class="section-title">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path d="M5 5h14v14H5z" stroke="#0f172a"/></svg>
+      预算设置
+    </div>
+    <div class="grid-2">
+      <div><label>年份</label><input id="bdYear" type="number"></div>
+      <div><label>月份</label><input id="bdMonth" type="number" min="1" max="12"></div>
+      <div><label>分类（留空表示总预算）</label><input id="bdCategory"></div>
+      <div><label>金额</label><input id="bdAmount" type="number" step="0.01"></div>
+    </div>
+    <div class="stack" style="margin-top:12px">
+      <button class="btn btn-primary" id="btnSetBudget">设置预算</button>
+    </div>
+    <div class="section-title" style="margin-top:16px">预算列表</div>
+    <table class="table">
+      <thead><tr><th>分类</th><th>金额</th><th>年月</th><th>操作</th></tr></thead>
+      <tbody id="bdTbody"></tbody>
+    </table>
+  </div>
+
+  <div class="surface">
+    <div class="section-title">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="#0f172a"/></svg>
+      图表概览
+    </div>
+    <div class="grid-2">
+      <div>
+        <label>最近月份支出</label>
+        <div id="monthlyChart" class="chart"></div>
+      </div>
+      <div>
+        <label>本月分类支出</label>
+        <div id="categoryChart" class="chart"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const base='/api'
+const token=localStorage.getItem('jwt')
+if(!token){location.href='/login.html'}
+
+let editingId=null
+const txTbody=document.getElementById('txTbody')
+const txType=document.getElementById('txType')
+const txAmount=document.getElementById('txAmount')
+const txCategory=document.getElementById('txCategory')
+const txDesc=document.getElementById('txDesc')
+const txDate=document.getElementById('txDate')
+const bdYear=document.getElementById('bdYear')
+const bdMonth=document.getElementById('bdMonth')
+const bdCategory=document.getElementById('bdCategory')
+const bdAmount=document.getElementById('bdAmount')
+const bdTbody=document.getElementById('bdTbody')
+
+async function fetchJSON(url,opts){
+  const r=await fetch(url,{...opts,headers:{...(opts&&opts.headers||{}),'Content-Type':'application/json','Authorization':'Bearer '+token}})
+  if(!r.ok) throw new Error('http '+r.status)
+  return r.status===204?null:await r.json()
+}
+
+async function loadTransactions(){
+  try{
+    const arr=await fetchJSON(base+'/transactions')
+    txTbody.innerHTML=arr.map(t=>`<tr>
+      <td>${t.type}</td>
+      <td style="text-align:right">${t.amount.toFixed(2)}</td>
+      <td>${t.categoryId||''}</td>
+      <td>${(t.description||'').replace(/</g,'&lt;')}</td>
+      <td>${t.date||''}</td>
+      <td>
+        <button class='btn' data-id='${t.id}' data-action='edit'>编辑</button>
+        <button class='btn' data-id='${t.id}' data-action='del'>删除</button>
+      </td>
+    </tr>`).join('')
+  }catch{txTbody.innerHTML='<tr><td colspan="6">加载交易失败</td></tr>'}
+}
+
+txTbody.onclick=async(e)=>{
+  const btn=e.target.closest('button'); if(!btn) return
+  const id=btn.getAttribute('data-id'); const action=btn.getAttribute('data-action')
+  if(action==='edit'){
+    const t=await fetchJSON(base+'/transactions/'+id)
+    editingId=id
+    txType.value=t.type; txAmount.value=t.amount; txCategory.value=t.categoryId||''; txDesc.value=t.description||''; txDate.value=(t.date||'')
+    window.scrollTo({top:0,behavior:'smooth'})
+  } else if(action==='del'){
+    await fetch(base+'/transactions/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}})
+    loadTransactions(); loadCharts();
+  }
+}
+
+document.getElementById('btnSaveTx').onclick=async()=>{
+  const payload={type:txType.value,amount:parseFloat(txAmount.value||'0'),categoryId:txCategory.value||null,description:txDesc.value||'',date:txDate.value?txDate.value:null}
+  if(editingId){
+    await fetchJSON(base+'/transactions/'+editingId,{method:'PUT',body:JSON.stringify(payload)})
+  }else{
+    await fetchJSON(base+'/transactions',{method:'POST',body:JSON.stringify(payload)})
+  }
+  editingId=null; txType.value='EXPENSE'; txAmount.value=''; txCategory.value=''; txDesc.value=''; txDate.value=''
+  loadTransactions(); loadCharts();
+}
+document.getElementById('btnResetTx').onclick=()=>{editingId=null; txType.value='EXPENSE'; txAmount.value=''; txCategory.value=''; txDesc.value=''; txDate.value=''}
+
+function nowYM(){const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()+1}}
+const nym=nowYM(); bdYear.value=nym.year; bdMonth.value=nym.month
+
+document.getElementById('btnSetBudget').onclick=async()=>{
+  const payload={year:parseInt(bdYear.value),month:parseInt(bdMonth.value),categoryId:(bdCategory.value||null),amount:parseFloat(bdAmount.value||'0')}
+  await fetchJSON(base+'/budgets',{method:'POST',body:JSON.stringify(payload)})
+  loadBudgets();
+}
+
+async function loadBudgets(){
+  try{
+    const arr=await fetchJSON(base+'/budgets')
+    bdTbody.innerHTML=arr.map(b=>`<tr>
+      <td>${b.categoryId||'总预算'}</td>
+      <td style='text-align:right'>${(b.amount||0).toFixed(2)}</td>
+      <td>${b.year}-${String(b.month).padStart(2,'0')}</td>
+      <td>
+        <button class='btn' data-id='${b.id}' data-action='bd-del'>删除</button>
+      </td>
+    </tr>`).join('')
+  }catch{bdTbody.innerHTML='<tr><td colspan="4">加载预算失败</td></tr>'}
+}
+
+bdTbody.onclick=async(e)=>{
+  const btn=e.target.closest('button'); if(!btn) return
+  const id=btn.getAttribute('data-id'); const action=btn.getAttribute('data-action')
+  if(action==='bd-del'){
+    await fetch(base+'/budgets/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}})
+    loadBudgets(); loadCharts();
+  }
+}
+
+async function loadCharts(){
+  try{
+    const months=12
+    const m=await fetchJSON(base+'/stats/monthly?months='+months)
+    const cont=document.getElementById('monthlyChart'); cont.innerHTML=''
+    const max=Math.max(...m.expenses,1)
+    m.expenses.forEach(v=>{const h=Math.round(160*(v/max)); const d=document.createElement('div'); d.className='bar'; d.style.height=h+'px'; cont.appendChild(d)})
+  }catch{document.getElementById('monthlyChart').innerHTML='<div style="color:var(--muted)">无法加载</div>'}
+  try{
+    const ym=nowYM(); const cat=await fetchJSON(base+`/stats/category?year=${ym.year}&month=${ym.month}`)
+    const cont=document.getElementById('categoryChart'); cont.innerHTML=''
+    const values=Object.values(cat); const labels=Object.keys(cat)
+    const sum=values.reduce((a,b)=>a+b,0)||1
+    values.forEach((v,i)=>{const h=Math.round(160*(v/sum)); const d=document.createElement('div'); d.className='bar'; d.title=labels[i]; d.style.height=h+'px'; cont.appendChild(d)})
+  }catch{document.getElementById('categoryChart').innerHTML='<div style="color:var(--muted)">无法加载</div>'}
+}
+
+loadTransactions(); loadBudgets(); loadCharts();
+</script>
+</body>
+</html>

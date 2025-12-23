@@ -1,0 +1,16 @@
+.DS_Store
+.vscode/
+
+# Maven build
+**/target/
+
+# Local runtime data
+accounting-app/data/
+data/
+
+# SQLite database
+accounting-app/accounting.db
+
+# Compiled classes & logs
+**/*.class
+**/*.log
