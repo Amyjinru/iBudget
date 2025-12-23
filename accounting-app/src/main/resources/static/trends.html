@@ -42,12 +42,12 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,B
   </div>
 
   <div class="surface ai-card">
-    <div class="section-title">🤖 AI智能消费分析</div>
+    <div class="section-title">AI智能消费分析</div>
     <div style="margin-bottom:12px;color:var(--muted);font-size:13px">
       基于AI大模型分析你的消费趋势，提供个性化节省建议和超支提醒
     </div>
     <div>
-      <button class="btn btn-primary" id="btnAIAnalyze">🔍 开始AI分析</button>
+      <button class="btn btn-primary" id="btnAIAnalyze">开始AI分析</button>
     </div>
     <div id="aiResult" style="margin-top:16px;display:none">
       <div class="ai-analysis" id="aiContent"></div>
@@ -114,7 +114,7 @@ document.getElementById('btnAIAnalyze').onclick=async()=>{
   const content=document.getElementById('aiContent')
   
   btn.disabled=true
-  btn.textContent='🔄 分析中...'
+  btn.textContent='分析中...'
   result.style.display='block'
   content.textContent='正在调用AI大模型进行深度分析，请稍候...'
   content.className='ai-analysis loading'
