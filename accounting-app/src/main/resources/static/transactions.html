@@ -1,212 +1,234 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>账目 · iBudget</title>
-<style>
-:root{--bg:#f7f8f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--accent:#0a84ff}
-[data-theme="dark"]{--bg:#0b0e11;--card:#12151a;--text:#e5e7eb;--muted:#94a3b8;--line:#2a2f37;--accent:#0a84ff}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,system-ui}
-.container{max-width:1080px;margin:0 auto;padding:24px}
-.header{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
-.nav a{color:var(--muted);text-decoration:none;margin-left:12px}
-.surface{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
-.section-title{display:flex;align-items:center;gap:8px;margin:0 0 12px 0;font-size:16px;font-weight:600}
-.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-label{font-size:12px;color:var(--muted)}
-input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;outline:none;background:#fff}
-input:focus,select:focus{border-color:var(--accent)}
-.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
-.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.stack{display:flex;gap:10px;flex-wrap:wrap}
-.table{width:100%;border-collapse:separate;border-spacing:0 8px}
-.table th{font-weight:600;color:var(--muted);text-align:left;padding:8px 10px}
-.table td{background:#fff;border:1px solid var(--line);border-left:none;border-right:none;padding:12px 10px}
-.table tr td:first-child{border-left:1px solid var(--line);border-radius:10px 0 0 10px}
-.table tr td:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}
-@media (max-width:768px){.grid-3{grid-template-columns:1fr}.grid-4{grid-template-columns:1fr}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>账目 · iBudget</title>
+    <style>
+        :root{--bg:#f7f8f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--accent:#0a84ff}
+        [data-theme="dark"]{--bg:#0b0e11;--card:#12151a;--text:#e5e7eb;--muted:#94a3b8;--line:#2a2f37;--accent:#0a84ff}
+        *{box-sizing:border-box}
+        body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,system-ui}
+        .container{max-width:1080px;margin:0 auto;padding:24px}
+        .header{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
+        .nav a{color:var(--muted);text-decoration:none;margin-left:12px}
+        .surface{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+        .section-title{display:flex;align-items:center;gap:8px;margin:0 0 12px 0;font-size:16px;font-weight:600}
+        .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+        .grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+        label{font-size:12px;color:var(--muted)}
+        input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;outline:none;background:#fff;color:var(--text)}
+        input:focus{border-color:var(--accent);box-shadow: 0 0 0 2px rgba(10,132,255,0.1)}
+
+        /* 日历浮窗样式 */
+        .datepicker-popover {
+            position: absolute;
+            z-index: 1000;
+            width: 280px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+        .cal-day-head { font-size: 11px; color: var(--muted); padding: 5px 0; font-weight: 600; }
+        .cal-date { padding: 8px 0; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 13px; border: 1px solid transparent; }
+        .cal-date:hover { background: var(--bg); border-color: var(--accent); }
+        .cal-today { color: var(--accent); font-weight: bold; background: #0a84ff15; }
+        .cal-selected { background: var(--accent) !important; color: #fff !important; }
+
+        .table{width:100%;border-collapse:separate;border-spacing:0 8px}
+        .table td{background:#fff;border:1px solid var(--line);padding:12px 10px}
+        .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
+        .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    </style>
 </head>
 <body>
+
+<div id="calendarPopover" class="datepicker-popover">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <button class="btn" style="padding: 2px 8px" id="calPrevMonth">«</button>
+        <div id="calHeader" style="font-weight: bold; font-size: 0.9rem;"></div>
+        <button class="btn" style="padding: 2px 8px" id="calNextMonth">»</button>
+    </div>
+    <div class="cal-grid">
+        <div class="cal-day-head">一</div><div class="cal-day-head">二</div><div class="cal-day-head">三</div>
+        <div class="cal-day-head">四</div><div class="cal-day-head">五</div><div class="cal-day-head">六</div>
+        <div class="cal-day-head">日</div>
+    </div>
+    <div class="cal-grid" id="calGridDays"></div>
+</div>
+
 <div class="container">
-  <div class="header">
-    <div>iBudget</div>
-    <div class="nav">
-      <a href="/transactions.html">账目</a>
-      <a href="/budgets.html">预算</a>
-      <a href="/trends.html">趋势</a>
-      <a href="/charts.html">图表</a>
-      <a href="/login.html">切换账号</a>
-      <a href="#" id="themeToggle">暗色</a>
+    <div class="header">
+        <div>iBudget</div>
+        <div class="nav">
+            <a href="/transactions.html">账目</a>
+            <a href="/budgets.html">预算</a>
+            <a href="/trends.html">趋势</a>
+            <a href="/charts.html">图表</a>
+            <a href="/login.html">切换账号</a>
+            <a href="#" id="themeToggle">切换主题</a>
+        </div>
     </div>
-  </div>
 
-  <div class="surface" style="margin-bottom:16px">
-    <div class="section-title">本月概览</div>
-    <div class="grid-4">
-      <div><label>净额</label><input id="sumNet" disabled></div>
-      <div><label>总收入</label><input id="sumInc" disabled></div>
-      <div><label>总支出</label><input id="sumExp" disabled></div>
-      <div><label>预算使用率</label><input id="sumRate" disabled></div>
+    <div class="surface" style="margin-bottom:16px">
+        <div class="section-title">本月概览</div>
+        <div class="grid-4">
+            <div><label>净额</label><input id="sumNet" disabled></div>
+            <div><label>总收入</label><input id="sumInc" disabled></div>
+            <div><label>总支出</label><input id="sumExp" disabled></div>
+            <div><label>预算使用率</label><input id="sumRate" disabled></div>
+        </div>
     </div>
-    <div class="stack" style="margin-top:8px">
-      <button class="btn" id="btnRefreshSummary">刷新概览</button>
-    </div>
-  </div>
 
-  <div class="surface" style="margin-bottom:16px">
-    <div class="section-title">新增/编辑账目</div>
-    <div class="grid-3">
-      <div><label>类型</label><select id="txType"><option value="EXPENSE">支出</option><option value="INCOME">收入</option></select></div>
-      <div><label>金额</label><input id="txAmount" type="number" step="0.01"></div>
-      <div><label>分类</label><input id="txCategory"></div>
-      <div style="grid-column:1/-1"><label>描述</label><input id="txDesc"></div>
-      <div style="grid-column:1/-1"><label>日期(ISO)</label><input id="txDate" placeholder="2025-01-01T12:00:00"></div>
+    <div class="surface" style="margin-bottom:16px">
+        <div class="section-title">新增/编辑账目</div>
+        <div class="grid-3">
+            <div><label>类型</label><select id="txType"><option value="EXPENSE">支出</option><option value="INCOME">收入</option></select></div>
+            <div><label>金额</label><input id="txAmount" type="number" step="0.01"></div>
+            <div><label>分类</label><input id="txCategory"></div>
+            <div style="grid-column:1/-1"><label>描述</label><input id="txDesc"></div>
+            <div style="grid-column:1/-1">
+                <label>日期时间 (YYYY-MM-DDTHH:mm:ss)</label>
+                <input id="txDate" class="dt-trigger" placeholder="2025-12-23T12:00:00">
+            </div>
+        </div>
+        <div class="stack" style="margin-top:12px; display:flex; gap:10px;">
+            <button class="btn btn-primary" id="btnSaveTx">保存</button>
+            <button class="btn" id="btnResetTx">重置</button>
+        </div>
     </div>
-    <div class="stack" style="margin-top:12px">
-      <button class="btn btn-primary" id="btnSaveTx">保存</button>
-      <button class="btn" id="btnResetTx">重置</button>
-    </div>
-  </div>
 
-  <div class="surface">
-    <div class="section-title">分类与过滤</div>
-    <div class="grid-4" style="margin-bottom:10px">
-      <div><label>分类</label><input id="fCategory"></div>
-      <div><label>类型</label><select id="fType"><option value="">全部</option><option value="EXPENSE">支出</option><option value="INCOME">收入</option></select></div>
-      <div><label>金额下限</label><input id="fMin" type="number" step="0.01"></div>
-      <div><label>金额上限</label><input id="fMax" type="number" step="0.01"></div>
-      <div><label>开始时间</label><input id="fStart" placeholder="2025-01-01T00:00:00"></div>
-      <div><label>结束时间</label><input id="fEnd" placeholder="2025-01-31T23:59:59"></div>
-      <div style="grid-column:1/-1"><label>关键字</label><input id="fQ" placeholder="描述或标签"></div>
+    <div class="surface">
+        <div class="section-title">查询过滤</div>
+        <div class="grid-4">
+            <div><label>开始时间</label><input id="fStart" class="dt-trigger" placeholder="2025-01-01T00:00:00"></div>
+            <div><label>结束时间</label><input id="fEnd" class="dt-trigger" placeholder="2025-12-31T23:59:59"></div>
+        </div>
+        <div class="stack" style="margin-top:12px; display:flex; gap:10px;">
+            <button class="btn btn-primary" id="btnApplyFilters">筛选</button>
+            <button class="btn" id="btnClearFilters">清除</button>
+        </div>
     </div>
-    <div class="stack">
-      <button class="btn btn-primary" id="btnApplyFilters">应用过滤</button>
-      <button class="btn" id="btnClearFilters">清除过滤</button>
-    </div>
-  </div>
-
-  <div class="surface" style="margin-top:16px">
-    <div class="section-title">账目列表</div>
-    <table class="table">
-      <thead><tr><th>类型</th><th>金额</th><th>分类</th><th>描述</th><th>日期</th><th>操作</th></tr></thead>
-      <tbody id="txTbody"></tbody>
-    </table>
-  </div>
 </div>
 
 <script>
-const savedTheme=localStorage.getItem('theme')||'light'
-document.documentElement.dataset.theme=savedTheme
-document.getElementById('themeToggle').onclick=(e)=>{e.preventDefault();const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('theme',t)}
-const base='/api'
-const token=localStorage.getItem('jwt'); if(!token){location.href='/login.html'}
-let editingId=null
+    // --- 日历与输入联动逻辑 ---
+    let displayDate = new Date();
+    let activeInput = null;
+    const popover = document.getElementById('calendarPopover');
 
-async function fetchJSON(url,opts){
-  const r=await fetch(url,{...opts,headers:{...(opts&&opts.headers||{}),'Content-Type':'application/json','Authorization':'Bearer '+token}})
-  if(!r.ok) throw new Error('http '+r.status)
-  return r.status===204?null:await r.json()
-}
+    function renderCalendar() {
+        const grid = document.getElementById('calGridDays');
+        const header = document.getElementById('calHeader');
+        grid.innerHTML = '';
+        const year = displayDate.getFullYear();
+        const month = displayDate.getMonth();
+        header.innerText = `${year}年 ${month + 1}月`;
 
-const txTbody=document.getElementById('txTbody')
-const txType=document.getElementById('txType')
-const txAmount=document.getElementById('txAmount')
-const txCategory=document.getElementById('txCategory')
-const txDesc=document.getElementById('txDesc')
-const txDate=document.getElementById('txDate')
+        const firstDay = new Date(year, month, 1).getDay();
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-const fCategory=document.getElementById('fCategory')
-const fType=document.getElementById('fType')
-const fMin=document.getElementById('fMin')
-const fMax=document.getElementById('fMax')
-const fStart=document.getElementById('fStart')
-const fEnd=document.getElementById('fEnd')
-const fQ=document.getElementById('fQ')
-const sumNet=document.getElementById('sumNet')
-const sumInc=document.getElementById('sumInc')
-const sumExp=document.getElementById('sumExp')
-const sumRate=document.getElementById('sumRate')
+        for (let i = 0; i < startOffset; i++) grid.appendChild(document.createElement('div'));
 
-function buildQuery(){
-  const p=new URLSearchParams()
-  if(fCategory.value) p.set('categoryId',fCategory.value)
-  if(fType.value) p.set('type',fType.value)
-  if(fMin.value) p.set('min',fMin.value)
-  if(fMax.value) p.set('max',fMax.value)
-  if(fStart.value && fEnd.value){p.set('start',fStart.value);p.set('end',fEnd.value)}
-  if(fQ.value) p.set('q',fQ.value)
-  const q=p.toString(); return q?('?'+q):''
-}
+        for (let d = 1; d <= daysInMonth; d++) {
+            const div = document.createElement('div');
+            div.className = 'cal-date';
+            div.innerText = d;
 
-async function loadTransactions(){
-  try{
-    const arr=await fetchJSON(base+'/transactions'+buildQuery())
-    txTbody.innerHTML=arr.map(t=>`<tr>
-      <td>${t.type}</td>
-      <td style='text-align:right'>${(t.amount||0).toFixed(2)}</td>
-      <td>${t.categoryId||''}</td>
-      <td>${(t.description||'').replace(/</g,'&lt;')}</td>
-      <td>${t.date||''}</td>
-      <td>
-        <button class='btn' data-id='${t.id}' data-action='edit'>编辑</button>
-        <button class='btn' data-id='${t.id}' data-action='del'>删除</button>
-      </td>
-    </tr>`).join('')
-  }catch{txTbody.innerHTML='<tr><td colspan="6">加载失败</td></tr>'}
-}
+            div.onclick = (e) => {
+                e.stopPropagation();
+                const datePart = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-function nowYM(){const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()+1}}
-async function loadSummary(){
-  try{
-    const ym=nowYM()
-    const ms=await fetchJSON(base+`/stats/month?year=${ym.year}&month=${ym.month}`)
-    sumNet.value=(ms.netAmount||0).toFixed(2)
-    sumInc.value=(ms.totalIncome||0).toFixed(2)
-    sumExp.value=(ms.totalExpense||0).toFixed(2)
-    const bu=await fetchJSON(base+`/budgets/usage?year=${ym.year}&month=${ym.month}`)
-    sumRate.value=(Math.round(((bu.rate||0)*1000))/10)+'%'
-  }catch{}
-}
+                // 提取原有的时间部分，若无则给默认值
+                let timePart = "12:00:00";
+                if (activeInput.value.includes('T')) {
+                    timePart = activeInput.value.split('T')[1];
+                }
 
-txTbody.onclick=async(e)=>{
-  const btn=e.target.closest('button'); if(!btn) return
-  const id=btn.getAttribute('data-id'); const action=btn.getAttribute('data-action')
-  if(action==='edit'){
-    const t=await fetchJSON(base+'/transactions/'+id)
-    editingId=id
-    txType.value=t.type; txAmount.value=t.amount; txCategory.value=t.categoryId||''; txDesc.value=t.description||''; txDate.value=(t.date||'')
-    window.scrollTo({top:0,behavior:'smooth'})
-  } else if(action==='del'){
-    await fetch(base+'/transactions/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}})
-    loadTransactions();
-    try{localStorage.setItem('ledgerLastUpdate', String(Date.now()))}catch{}
-    try{loadSummary()}catch{}
-  }
-}
+                activeInput.value = `${datePart}T${timePart}`;
+                hideCalendar();
+                activeInput.focus(); // 选完日期后焦点回到输入框，方便用户立即修改时分秒
+            };
+            grid.appendChild(div);
+        }
+    }
 
-document.getElementById('btnSaveTx').onclick=async()=>{
-  const payload={type:txType.value,amount:parseFloat(txAmount.value||'0'),categoryId:txCategory.value||null,description:txDesc.value||'',date:txDate.value?txDate.value:null}
-  if(editingId){
-    await fetchJSON(base+'/transactions/'+editingId,{method:'PUT',body:JSON.stringify(payload)})
-  }else{
-    await fetchJSON(base+'/transactions',{method:'POST',body:JSON.stringify(payload)})
-  }
-  editingId=null; txType.value='EXPENSE'; txAmount.value=''; txCategory.value=''; txDesc.value=''; txDate.value=''
-  loadTransactions();
-  try{localStorage.setItem('ledgerLastUpdate', String(Date.now()))}catch{}
-  try{loadSummary()}catch{}
-}
-document.getElementById('btnResetTx').onclick=()=>{editingId=null; txType.value='EXPENSE'; txAmount.value=''; txCategory.value=''; txDesc.value=''; txDate.value=''}
+    function showCalendar(input) {
+        activeInput = input;
+        const rect = input.getBoundingClientRect();
+        popover.style.display = 'block';
+        popover.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+        popover.style.left = (rect.left + window.scrollX) + 'px';
+        renderCalendar();
+    }
 
-document.getElementById('btnApplyFilters').onclick=()=>loadTransactions()
-document.getElementById('btnClearFilters').onclick=()=>{fCategory.value='';fType.value='';fMin.value='';fMax.value='';fStart.value='';fEnd.value='';fQ.value='';loadTransactions()}
-document.getElementById('btnRefreshSummary').onclick=()=>loadSummary()
+    function hideCalendar() { popover.style.display = 'none'; }
 
-loadTransactions(); loadSummary()
+    // 绑定事件：点击输入框弹出，但允许键入
+    document.querySelectorAll('.dt-trigger').forEach(el => {
+        el.addEventListener('focus', () => showCalendar(el));
+        el.addEventListener('click', (e) => { e.stopPropagation(); showCalendar(el); });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!popover.contains(e.target) && !e.target.classList.contains('dt-trigger')) hideCalendar();
+    });
+
+    document.getElementById('calPrevMonth').onclick = (e) => { e.stopPropagation(); displayDate.setMonth(displayDate.getMonth() - 1); renderCalendar(); };
+    document.getElementById('calNextMonth').onclick = (e) => { e.stopPropagation(); displayDate.setMonth(displayDate.getMonth() + 1); renderCalendar(); };
+
+    // --- 基础 API 交互逻辑 ---
+    const base='/api';
+    const token=localStorage.getItem('jwt');
+
+    async function fetchJSON(url,opts){
+        const r=await fetch(url,{...opts,headers:{...(opts?.headers||{}),'Content-Type':'application/json','Authorization':'Bearer '+token}})
+        return r.ok ? (r.status===204?null:await r.json()) : null;
+    }
+
+    document.getElementById('themeToggle').onclick=(e)=>{
+        e.preventDefault();
+        const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = t;
+        localStorage.setItem('theme', t);
+    };
+
+    // 初始化主题
+    document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light';
+
+    // 保存账目
+    document.getElementById('btnSaveTx').onclick = async () => {
+        const payload = {
+            type: document.getElementById('txType').value,
+            amount: parseFloat(document.getElementById('txAmount').value),
+            categoryId: document.getElementById('txCategory').value,
+            description: document.getElementById('txDesc').value,
+            date: document.getElementById('txDate').value
+        };
+        await fetchJSON(base + '/transactions', {method:'POST', body:JSON.stringify(payload)});
+        alert('保存成功');
+    };
+
+    document.getElementById('btnResetTx').onclick = () => {
+        document.querySelectorAll('.surface input').forEach(i => i.value = '');
+    };
+
+    async function loadSummary(){
+        const d = new Date();
+        const data = await fetchJSON(base+`/stats/month?year=${d.getFullYear()}&month=${d.getMonth()+1}`);
+        if(data) {
+            document.getElementById('sumNet').value = data.netAmount.toFixed(2);
+            document.getElementById('sumInc').value = data.totalIncome.toFixed(2);
+            document.getElementById('sumExp').value = data.totalExpense.toFixed(2);
+        }
+    }
+
+    loadSummary();
 </script>
 </body>
 </html>
