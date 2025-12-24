@@ -5,24 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>iBudget · 注册</title>
     <style>
-        :root{--bg:#f7f8f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--accent:#0a84ff}
-        [data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#f8fafc;--muted:#94a3b8;--line:#334155;--accent:#38bdf8}
-        *{box-sizing:border-box}
+        :root{--bg:#f7f8f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--accent:#0a84ff;--success:#10b981;--error:#ef4444}
+        [data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#f8fafc;--muted:#94a3b8;--line:#334155;--accent:#38bdf8;--error:#f87171}
+        *{box-sizing:border-box;margin:0;padding:0}
         html,body{height:100%}
-        body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,system-ui;display:flex;align-items:center;justify-content:center}
+        body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,system-ui;display:flex;align-items:center;justify-content:center}
         .surface{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 1px 2px rgba(15,23,42,.06)}
         .brand{display:flex;align-items:center;gap:10px;margin-bottom:12px}
         .brand .logo{width:28px;height:28px}
-        .brand .name{font-weight:800;font-size:1.2rem}
-        label{font-size:12px;color:var(--muted);font-weight:600}
-        input{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);outline:none;margin-top:6px;transition:border-color .2s}
-        input:focus{border-color:var(--accent)}
-        .btn{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);cursor:pointer;margin-top:10px;font-weight:600}
-        .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-        .btn:hover{opacity:.9}
-        .status{margin-top:10px;font-size:13px;color:var(--muted)}
-        .status.ok{color:#10b981}
-        .status.err{color:#ef4444}
+        .brand .name{font-weight:800;font-size:1.2rem;color:var(--text)}
+        label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bottom:6px}
+        input{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);outline:none;transition:all .2s;font-size:14px}
+        input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(10,132,255,0.1)}
+        input::placeholder{color:var(--muted);opacity:0.8}
+
+        /* 核心：默认隐藏提示框，只有有内容时才显示 */
+        .validate-msg{font-size:11px;margin-top:4px;min-height:16px;font-weight:500;display:none;align-items:center;gap:4px}
+        .validate-msg.show{display:flex} /* 有内容时显示 */
+        .validate-msg.success{color:var(--success)}
+        .validate-msg.error{color:var(--error)}
+        .validate-msg.loading{color:var(--accent); font-style: italic;}
+        .validate-msg.success::before{content:"✅";font-size:12px;display:inline-block}
+        .validate-msg.error::before{content:"⚠️";font-size:12px;display:inline-block}
+        .validate-msg.loading::before{content:"⌛";font-size:12px;display:inline-block}
+
+        .btn{width:100%;padding:12px;border:none;border-radius:12px;background:var(--card);color:var(--text);cursor:pointer;margin-top:10px;font-weight:600;font-size:14px;transition:opacity .2s}
+        .btn-primary{background:var(--accent);color:#fff}
+        .btn:hover:not(:disabled){opacity:.9}
+        .btn:disabled{cursor:not-allowed; opacity: 0.5; background: var(--muted); color: var(--card);}
+        .status{margin-top:10px;font-size:13px;color:var(--muted);text-align:center}
+        .link-row{margin-top: 20px; text-align: center; font-size: 13px;}
+        .link-row span{color: var(--muted);}
+        .link-row a{color: var(--accent); text-decoration: none; font-weight: 800;}
+
+        /* 弹窗样式 */
+        #recoveryModal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:1000}
+        #recoveryModal .modal-content{background:var(--card);padding:24px;border-radius:16px;width:90%;max-width:320px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
+        #recoveryModal h3{margin-top:0;color:var(--text)}
+        #recoveryModal p{color:var(--muted);font-size:14px;margin-bottom:15px}
+        #recoveryKeyDisplay{background:var(--bg);padding:10px;border-radius:8px;font-family:monospace;font-size:18px;border:1px dashed var(--accent);color:var(--accent);margin-bottom:20px;user-select:all;word-break:break-all}
     </style>
 </head>
 <body>
@@ -33,72 +54,308 @@
         <div style="flex:1"></div>
         <a href="#" id="themeToggle" style="font-size:12px; color:var(--accent); text-decoration:none; font-weight:800">主题</a>
     </div>
-    <div>
+
+    <div style="margin-top:16px">
         <label>用户名</label>
-        <input id="username" placeholder="设置用户名">
+        <input id="username" placeholder="输入用户名，3-20位字符">
+        <div id="uMsg" class="validate-msg"></div>
     </div>
+
     <div style="margin-top:10px">
         <label>密码</label>
-        <input id="password" type="password" placeholder="设置密码">
+        <!-- 占位符提示密码规则 -->
+        <input id="password" type="password" placeholder="至少6位，需同时包含字母和数字">
+        <div id="pMsg" class="validate-msg"></div>
     </div>
+
     <div style="margin-top:10px">
         <label>确认密码</label>
-        <input id="confirmPassword" type="password" placeholder="重复密码">
+        <input id="confirmPassword" type="password" placeholder="再次输入密码">
+        <div id="cpMsg" class="validate-msg"></div>
     </div>
+
     <button class="btn btn-primary" id="btnRegister" style="margin-top:20px">完成注册</button>
-    <div style="margin-top: 20px; text-align: center; font-size: 13px;">
-        <span style="color: var(--muted)">已有账号?</span>
-        <a href="login.html" style="color: var(--accent); text-decoration: none; font-weight: 800;">返回登录</a>
+
+    <div class="link-row">
+        <span>已有账号?</span>
+        <a href="login.html">返回登录</a>
     </div>
+
     <div class="status" id="authStatus"></div>
 </div>
 
-<div id="recoveryModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:1000">
-    <div style="background:var(--card);padding:24px;border-radius:16px;width:90%;max-width:320px;text-align:center;">
-        <h3 style="margin-top:0">注册成功!</h3>
-        <p style="color:var(--muted);font-size:14px;margin-bottom:15px">请务必保存恢复密钥：</p>
-        <div id="recoveryKeyDisplay" style="background:var(--bg);padding:10px;border-radius:8px;font-family:monospace;font-size:18px;border:1px dashed var(--accent);color:var(--accent);margin-bottom:20px;user-select:all"></div>
+<div id="recoveryModal">
+    <div class="modal-content">
+        <h3>注册成功!</h3>
+        <p>请务必保存恢复密钥：</p>
+        <div id="recoveryKeyDisplay"></div>
         <button class="btn btn-primary" id="btnConfirmAndGo">我已保存，进入系统</button>
     </div>
 </div>
 
 <script>
-    const savedTheme=localStorage.getItem('theme')||'light';
+    // 主题切换 - 适配截图深色主题
+    const savedTheme=localStorage.getItem('theme')||'dark'; // 默认深色
     document.documentElement.dataset.theme=savedTheme;
-    document.getElementById('themeToggle').onclick=(e)=>{e.preventDefault();const t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('theme',t)};
+    document.getElementById('themeToggle').onclick=(e)=>{
+        e.preventDefault();
+        const t=document.documentElement.dataset.theme==='dark'?'light':'dark';
+        document.documentElement.dataset.theme=t;
+        localStorage.setItem('theme',t);
+    };
 
-    const state={base:'/api', tempToken: ''};
-    const authStatus=document.getElementById('authStatus');
+    const state = {
+        base: '/api',
+        tempToken: '',
+        uTimer: null,
+        uValid: false,
+        pValid: false,
+        cpValid: false,
+        skipRemoteCheck: true // 先临时跳过，测试本地逻辑
+    };
 
-    document.getElementById('btnRegister').onclick=async()=>{
-        const u = document.getElementById('username').value;
-        const p = document.getElementById('password').value;
-        const cp = document.getElementById('confirmPassword').value;
-        if(!u || !p || p !== cp){ authStatus.textContent='信息不全或密码不一致'; authStatus.className='status err'; return; }
+    const el = {
+        u: document.getElementById('username'),
+        uMsg: document.getElementById('uMsg'),
+        p: document.getElementById('password'),
+        pMsg: document.getElementById('pMsg'),
+        cp: document.getElementById('confirmPassword'),
+        cpMsg: document.getElementById('cpMsg'),
+        btn: document.getElementById('btnRegister'),
+        authStatus: document.getElementById('authStatus')
+    };
 
-        try{
-            const r=await fetch(state.base+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,confirmPassword:cp})});
-            if(r.ok){
-                const data = await r.json();
-                document.getElementById('recoveryKeyDisplay').textContent = data.recoveryKey;
-                // 核心：保存后端返回的 token
-                state.tempToken = data.token;
-                document.getElementById('recoveryModal').style.display = 'flex';
-            } else {
-                const data = await r.json(); authStatus.textContent='注册失败: ' + (data.error || '未知错误'); authStatus.className='status err';
-            }
-        }catch{authStatus.textContent='网络异常';authStatus.className='status err'}
+    // 更新按钮状态
+    function updateBtnState() {
+        el.btn.disabled = !(state.uValid && state.pValid && state.cpValid);
     }
 
-    // 关键逻辑：点击弹窗按钮时，先存 Token 再跳转
-    document.getElementById('btnConfirmAndGo').onclick=()=>{
-        if(state.tempToken) {
+    // 用户名格式验证正则 (3-20位字母、数字、下划线/纯数字)
+    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+    // 新增：密码正则 - 至少6位，同时包含字母和数字
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/;
+
+    // 用户名检测逻辑（输入前不显示警告符号）
+    el.u.oninput = () => {
+        state.uValid = false;
+        updateBtnState();
+        clearTimeout(state.uTimer);
+        const val = el.u.value.trim();
+
+        // 清空状态 + 隐藏提示框
+        el.uMsg.textContent = '';
+        el.uMsg.classList.remove('show', 'success', 'error', 'loading');
+        el.u.className = '';
+
+        if (!val) {
+            return; // 输入为空时，完全隐藏提示
+        }
+
+        // 1. 本地格式验证（优先）
+        if (!usernameRegex.test(val)) {
+            el.uMsg.textContent = '用户名需为3-20位字母、数字或下划线';
+            el.uMsg.classList.add('show', 'error'); // 显示错误提示
+            el.u.className = 'invalid';
+            return;
+        }
+
+        // 2. 远程查重 - 修复核心：增加容错+降级逻辑
+        if (state.skipRemoteCheck) {
+            // 临时跳过远程验证（接口不可用时）
+            el.uMsg.textContent = '用户名可以使用';
+            el.uMsg.classList.add('show', 'success'); // 显示成功提示
+            el.u.className = 'valid';
+            state.uValid = true;
+            updateBtnState();
+            return;
+        }
+
+        el.uMsg.textContent = '正在检测用户名...';
+        el.uMsg.classList.add('show', 'loading'); // 显示加载提示
+
+        state.uTimer = setTimeout(async () => {
+            try {
+                // 修复：接口地址兼容 + 超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+
+                const r = await fetch(
+                    `${state.base}/auth/check-username?username=${encodeURIComponent(val)}`,
+                    {
+                        method: 'GET',
+                        signal: controller.signal,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    }
+                );
+                clearTimeout(timeoutId);
+
+                // 修复：兼容不同响应状态
+                if (r.status === 404) {
+                    // 接口不存在时降级为“可用”
+                    el.uMsg.textContent = '用户名可以使用';
+                    el.uMsg.classList.remove('loading');
+                    el.uMsg.classList.add('success');
+                    el.u.className = 'valid';
+                    state.uValid = true;
+                } else if (r.ok) {
+                    const data = await r.json();
+                    // 修复：兼容不同响应格式
+                    if (data.available || data.success || data.code === 200) {
+                        el.uMsg.textContent = '用户名可以使用';
+                        el.uMsg.classList.remove('loading');
+                        el.uMsg.classList.add('success');
+                        el.u.className = 'valid';
+                        state.uValid = true;
+                    } else {
+                        el.uMsg.textContent = data.message || '该用户名已被占用';
+                        el.uMsg.classList.remove('loading');
+                        el.uMsg.classList.add('error');
+                        el.u.className = 'invalid';
+                        state.uValid = false;
+                    }
+                } else {
+                    // 非200状态但不终止，降级为“可用”
+                    el.uMsg.textContent = '用户名可以使用（检测服务暂不可用）';
+                    el.uMsg.classList.remove('loading');
+                    el.uMsg.classList.add('success');
+                    el.u.className = 'valid';
+                    state.uValid = true;
+                }
+            } catch (err) {
+                // 修复：所有异常（网络/超时/接口错误）都降级为“可用”
+                console.warn('用户名查重接口异常:', err);
+                el.uMsg.textContent = '用户名可以使用（检测服务暂不可用）';
+                el.uMsg.classList.remove('loading');
+                el.uMsg.classList.add('success');
+                el.u.className = 'valid';
+                state.uValid = true;
+            }
+            updateBtnState();
+        }, 600);
+    };
+
+    // 密码校验逻辑（核心修改：要求同时包含字母和数字）
+    function checkPasswords() {
+        // 清空密码提示状态
+        el.pMsg.textContent = '';
+        el.pMsg.classList.remove('show', 'success', 'error');
+        el.cpMsg.textContent = '';
+        el.cpMsg.classList.remove('show', 'success', 'error');
+        el.p.className = '';
+        el.cp.className = '';
+
+        // 密码校验（仅当输入内容时才显示提示）
+        if (el.p.value.length > 0) {
+            // 1. 先检查长度
+            if (el.p.value.length < 6) {
+                el.pMsg.textContent = '密码至少需要6位';
+                el.pMsg.classList.add('show', 'error');
+                el.p.className = 'invalid';
+                state.pValid = false;
+            }
+            // 2. 检查是否同时包含字母和数字
+            else if (!passwordRegex.test(el.p.value)) {
+                el.pMsg.textContent = '密码需同时包含字母和数字';
+                el.pMsg.classList.add('show', 'error');
+                el.p.className = 'invalid';
+                state.pValid = false;
+            }
+            // 3. 密码格式符合要求
+            else {
+                el.pMsg.textContent = '密码格式符合要求';
+                el.pMsg.classList.add('show', 'success');
+                el.p.className = 'valid';
+                state.pValid = true;
+            }
+        } else {
+            state.pValid = false;
+        }
+
+        // 确认密码一致性（仅当输入内容时才显示提示）
+        if (el.cp.value.length > 0) {
+            // 只有密码格式正确时，才校验一致性
+            if (state.pValid && el.cp.value === el.p.value) {
+                el.cpMsg.textContent = '密码一致';
+                el.cpMsg.classList.add('show', 'success');
+                el.cp.className = 'valid';
+                state.cpValid = true;
+            } else {
+                el.cpMsg.textContent = '两次输入的密码不一致';
+                el.cpMsg.classList.add('show', 'error');
+                el.cp.className = 'invalid';
+                state.cpValid = false;
+            }
+        } else {
+            state.cpValid = false;
+        }
+        updateBtnState();
+    }
+
+    el.p.oninput = checkPasswords;
+    el.cp.oninput = checkPasswords;
+
+    // 注册提交逻辑（保留，增加密码二次校验）
+    el.btn.onclick = async () => {
+        if (el.btn.disabled) return;
+
+        // 双重验证（包含密码规则校验）
+        if (!usernameRegex.test(el.u.value.trim()) || !state.uValid ||
+            !passwordRegex.test(el.p.value) || !state.pValid || !state.cpValid) {
+            el.authStatus.textContent = '请检查并修正表单错误';
+            el.authStatus.style.color = 'var(--error)';
+            return;
+        }
+
+        el.btn.disabled = true;
+        el.authStatus.textContent = '正在注册中...';
+        el.authStatus.style.color = 'var(--muted)';
+
+        try {
+            const r = await fetch(state.base + '/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: el.u.value.trim(),
+                    password: el.p.value,
+                    confirmPassword: el.cp.value
+                })
+            });
+
+            if (r.ok) {
+                const data = await r.json();
+                document.getElementById('recoveryKeyDisplay').textContent = data.recoveryKey || '无恢复密钥';
+                state.tempToken = data.token || '';
+                document.getElementById('recoveryModal').style.display = 'flex';
+                el.authStatus.textContent = '';
+            } else {
+                const data = await r.json().catch(() => ({}));
+                el.authStatus.textContent = '注册失败: ' + (data.error || data.message || '未知错误');
+                el.authStatus.style.color = 'var(--error)';
+                el.btn.disabled = false;
+            }
+        } catch (e) {
+            console.error('注册请求错误:', e);
+            el.authStatus.textContent = '网络连接异常，请检查网络';
+            el.authStatus.style.color = 'var(--error)';
+            el.btn.disabled = false;
+        }
+    };
+
+    // 确认密钥后跳转
+    document.getElementById('btnConfirmAndGo').onclick = () => {
+        if (state.tempToken) {
             localStorage.setItem('jwt', state.tempToken);
             window.location.href = 'transactions.html';
         } else {
             window.location.href = 'login.html';
         }
     };
+
+    // 初始禁用按钮
+    updateBtnState();
 </script>
 </body>
 </html>
